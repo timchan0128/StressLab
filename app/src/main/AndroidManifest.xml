@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REORDER_TASKS" />
+
+    <application
+        android:label="StressLab"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:allowBackup="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.NoActionBar">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".StressService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- LineOS 扫描 meta-data ultrabar.plugin 后自动拉起本服务。
+             permission 由 LineOS 定义并持有，第三方无法伪造启动；
+             注意权限名中的 REGISER 为宿主原文拼写，不可修改。 -->
+        <service
+            android:name=".plugin.PluginService"
+            android:enabled="true"
+            android:exported="true"
+            android:foregroundServiceType="specialUse"
+            android:permission="com.ultrabar.plugin.SERVER_REGISER_PERMISSION">
+            <meta-data android:name="ultrabar.plugin" android:value="com.thermal.stress" />
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="LineOS plugin bridge: register/describe/call for StressLab" />
+        </service>
+
+    </application>
+</manifest>

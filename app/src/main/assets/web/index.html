@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UltraBARX StressLab (Performance Test Console)</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+<link rel="icon" type="image/png" sizes="64x64" href="/favicon64.png">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #eef1f5; color: #263238; padding: 18px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px; margin-bottom: 14px;
+  }
+  header h1 { font-size: 22px; }
+  header .meta { font-size: 13px; color: #607d8b; }
+  .hd-right { display: flex; align-items: center; gap: 12px; }
+  .amb-box { display: flex; align-items: center; gap: 5px; font-size: 13px; color: #546e7a;
+    background: #fff; border: 1px solid #cfd8dc; border-radius: 7px; padding: 4px 10px; }
+  .amb-box input { width: 52px; border: 0; border-bottom: 1px solid #cfd8dc; font-size: 14px;
+    text-align: center; padding: 2px; }
+  .amb-box input:focus { outline: none; border-bottom-color: #1976d2; }
+  .lang-sw { display: flex; border: 1px solid #cfd8dc; border-radius: 7px; overflow: hidden; }
+  .lang-sw button {
+    border: 0; border-radius: 0; padding: 5px 12px; font-size: 13px; cursor: pointer;
+    background: #fff; color: #607d8b;
+  }
+  .lang-sw button.active { background: #1976d2; color: #fff; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    background: #43a047; margin-right: 6px; }
+  .dot.off { background: #e53935; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+  .card {
+    background: #fff; border-radius: 12px; padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  .card h2 { font-size: 15px; margin-bottom: 12px; color: #37474f;
+    display: flex; justify-content: space-between; align-items: center; }
+  .zone { border-left: 5px solid #999; }
+  .zone .zname { font-size: 13px; color: #78909c; }
+  .zone .ztemp { font-size: 34px; font-weight: 700; line-height: 1.15; margin: 2px 0; }
+  .zone .zmax { font-size: 12px; color: #90a4ae; }
+  .chart-card { grid-column: 1 / -1; }
+  #chart { width: 100%; height: 320px; display: block; }
+  .hw { display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; color: #455a64; }
+  .ubox { margin: 12px 0; font-size: 13px; color: #37474f; }
+  .ulabel { display:flex; justify-content:space-between; margin-bottom:3px; }
+  .ulabel b { font-size: 15px; }
+  .ubar { height: 10px; background: #eceff1; border-radius: 5px; overflow: hidden; }
+  .ubar > i { display:block; height:100%; border-radius:5px; }
+  .cores { display:flex; gap:6px; margin-top:6px; }
+  .corebar { flex:1; text-align:center; font-size:11px; color:#607d8b; }
+  .corebar .ubar { height:6px; margin-bottom:2px; }
+  .kv { font-size:13px; color:#455a64; line-height:2; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+  label.lbl { display: block; font-size: 13px; margin: 10px 0 4px; color: #455a64; }
+  input[type=range] { width: 100%; }
+  .val { float: right; font-weight: 600; color: #1565c0; }
+  .switch { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;
+    margin-bottom: 6px; cursor: pointer; }
+  .switch input { width: 20px; height: 20px; }
+  button {
+    border: 0; border-radius: 8px; padding: 9px 16px; font-size: 14px; cursor: pointer;
+    background: #1976d2; color: #fff; transition: background .15s;
+  }
+  button:hover { background: #1565c0; }
+  button.gray { background: #78909c; }
+  button.gray:hover { background: #607d8b; }
+  button.red { background: #e53935; }
+  button.red:hover { background: #c62828; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .btns { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .status-line { font-size: 13px; color: #546e7a; margin-top: 8px; }
+  .warn {
+    display: none; background: #ffebee; border: 1px solid #ef9a9a; color: #c62828;
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 14px;
+    justify-content: space-between; align-items: center;
+  }
+  .warn.show { display: flex; }
+  .warn button { background: #c62828; padding: 5px 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid #eceff1; }
+  th { color: #78909c; font-weight: 600; }
+  td a { color: #1976d2; text-decoration: none; }
+  td a:hover { text-decoration: underline; }
+  .tag { font-size: 11px; background: #e3f2fd; color: #1565c0; border-radius: 4px;
+    padding: 1px 6px; margin-left: 6px; }
+  .running-tag { color: #e53935; font-weight: 700; font-size: 14px; }
+  select, input[type=number] {
+    padding: 7px; border: 1px solid #cfd8dc; border-radius: 6px; font-size: 14px; width: 100%;
+  }
+  .note { font-size: 12px; color: #90a4ae; margin-top: 8px; }
+  .step-prog { font-size: 15px; font-weight: 700; color: #e53935; margin-top: 10px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2,1fr); } .row3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1 data-i18n="title">StressLab 整机性能测试控制台</h1>
+      <div class="meta" id="devinfo">…</div>
+    </div>
+    <div class="hd-right">
+      <div class="amb-box" title="设备无环境温度传感器，请按实测室温手动填写，将记入CSV">
+        <span class="amb-label" data-i18n="ambient">环境温度</span>
+        <input type="number" id="ambientInput" min="-10" max="80" step="0.5" value="27">
+        <span>℃</span>
+      </div>
+      <div class="lang-sw">
+        <button id="langZh" onclick="setLang('zh')">中文</button>
+        <button id="langEn" onclick="setLang('en')">EN</button>
+      </div>
+      <div class="meta"><span id="connDot" class="dot off"></span><span id="connText"></span></div>
+    </div>
+  </header>
+
+  <div class="warn" id="warnBox">
+    <span id="warnText"></span>
+    <button data-i18n="warnBtn" onclick="post('/api/trip/clear',{},()=>{})">知道了</button>
+  </div>
+
+  <div class="grid" id="zoneGrid"></div>
+
+  <div class="row3" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="card">
+      <h2 data-i18n="cardLive">实时系统负载</h2>
+      <div id="loadStats"></div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="cardMem">内存 / DDR</h2>
+      <div id="memStats"></div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="cardPower">供电 / 电池</h2>
+      <div id="powerStats"></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card chart-card">
+      <h2 data-i18n="cardChart">实时温度曲线</h2>
+      <canvas id="chart"></canvas>
+      <div class="hw" style="margin-top:10px" id="hwLine"></div>
+    </div>
+  </div>
+
+  <div class="row3">
+    <!-- CPU -->
+    <div class="card">
+      <h2 data-i18n="cardCpu">CPU 负载（烧核）</h2>
+      <label class="switch"><input type="checkbox" id="cpuOn"> <span data-i18n="cpuOn">启用 CPU 烧核</span></label>
+      <label class="lbl"><span data-i18n="loadPct">负载强度</span> <span class="val" id="cpuLoadV">100%</span></label>
+      <input type="range" id="cpuLoad" min="0" max="100" value="100">
+      <label class="lbl"><span data-i18n="cpuThreads">烧核线程</span> <span class="val" id="cpuThreadsV">4</span></label>
+      <input type="range" id="cpuThreads" min="1" max="4" value="4">
+    </div>
+    <!-- GPU -->
+    <div class="card">
+      <h2 data-i18n="cardGpu">GPU 负载（OpenGL ES）</h2>
+      <label class="switch"><input type="checkbox" id="gpuOn"> <span data-i18n="gpuOn">启用 GPU 渲染</span></label>
+      <label class="lbl"><span data-i18n="gpuLoad">着色器复杂度</span> <span class="val" id="gpuLoadV">60%</span></label>
+      <input type="range" id="gpuLoad" min="1" max="100" value="60">
+      <div class="note" data-i18n="gpuNote">GPU 渲染依赖终端屏幕：测试期间请保持终端上的应用在前台、屏幕常亮（应用已自动设置）。</div>
+    </div>
+    <!-- MEM -->
+    <div class="card">
+      <h2 data-i18n="cardMemLoad">内存 / DDR 负载</h2>
+      <label class="switch"><input type="checkbox" id="memOn"> <span data-i18n="memOn">启用内存读写</span></label>
+      <label class="lbl"><span data-i18n="memMb">占用内存</span> <span class="val" id="memMbV">256 MB</span></label>
+      <input type="range" id="memMb" min="64" max="3072" step="64" value="256">
+    </div>
+  </div>
+
+  <div class="row3">
+    <!-- IO -->
+    <div class="card">
+      <h2 data-i18n="cardIo">存储 I/O 负载</h2>
+      <label class="switch"><input type="checkbox" id="ioOn"> <span data-i18n="ioOn">启用持续读写（sync 落盘）</span></label>
+      <label class="lbl"><span data-i18n="ioThreads">IO 线程</span> <span class="val" id="ioThreadsV">2</span></label>
+      <input type="range" id="ioThreads" min="1" max="4" value="2">
+      <div class="btns">
+        <button class="red" data-i18n="stopAll" onclick="post('/api/stop',{},()=>{})">■ 一键停止全部负载</button>
+      </div>
+    </div>
+
+    <!-- 阶梯测试 -->
+    <div class="card">
+      <h2 data-i18n="cardStep">自动化阶梯测试</h2>
+      <label class="lbl" data-i18n="stepRange">起始 / 终止 / 步进 (%)</label>
+      <div style="display:flex;gap:8px">
+        <input type="number" id="stStart" min="0" max="100" value="25">
+        <input type="number" id="stEnd" min="0" max="100" value="100">
+        <input type="number" id="stStep" min="1" max="100" value="25">
+      </div>
+      <label class="lbl" data-i18n="stepSec">每档时长（秒） / 烧核线程</label>
+      <div style="display:flex;gap:8px">
+        <input type="number" id="stSec" min="5" max="86400" step="30" value="600">
+        <input type="number" id="stThreads" min="1" max="4" value="4">
+      </div>
+      <div class="btns">
+        <button data-i18n="stepStart" onclick="startStep()">开始阶梯测试</button>
+        <button class="red" data-i18n="stepAbort" onclick="post('/api/step/abort',{},()=>{})">中止</button>
+      </div>
+      <div class="step-prog" id="stepProg"></div>
+    </div>
+
+    <!-- 保护 + Root -->
+    <div class="card">
+      <h2 data-i18n="cardProt">超温保护 & Root 锁频</h2>
+      <label class="lbl"><span data-i18n="protModeLbl">温度保护</span>
+        <select id="protMode">
+          <option value="0" data-i18n="protOff">关闭（不提醒）</option>
+          <option value="1" data-i18n="protAlert">仅提醒（不停负载）</option>
+          <option value="2" selected data-i18n="protStop">提醒并自动停止</option>
+        </select>
+      </label>
+      <label class="lbl"><span data-i18n="protThr">保护阈值</span> <span class="val" id="protV">85 ℃</span></label>
+      <input type="range" id="protThr" min="60" max="105" value="85">
+      <div class="status-line" id="rootStatus" style="margin-top:12px"></div>
+      <label class="lbl" data-i18n="freqLock">CPU 频率锁定</label>
+      <select id="rootFreq"></select>
+      <div class="btns">
+        <button class="gray" data-i18n="rootDetect" onclick="post('/api/root/detect',{},load)">检测 Root</button>
+        <button class="gray" data-i18n="rootApply" onclick="lockFreq()">应用锁频</button>
+        <button class="gray" data-i18n="rootUnlock" onclick="post('/api/root/unlock',{},load)">还原</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span data-i18n="cardCsv">测试记录（CSV）</span>
+      <span style="display:flex;gap:8px">
+        <button class="gray" style="padding:5px 12px" data-i18n="csvZip" onclick="csvZip()">打包下载</button>
+        <button class="gray" style="padding:5px 12px" data-i18n="csvDel" onclick="csvDel()">删除所选</button>
+        <button class="gray" style="padding:5px 12px" data-i18n="refresh" onclick="load()">刷新列表</button>
+      </span>
+    </h2>
+    <table>
+      <thead><tr>
+        <th style="width:36px" title="全选/全不选"><input type="checkbox" id="csvAll" onchange="csvAllToggle(this)"></th>
+        <th data-i18n="thName">文件名</th><th data-i18n="thSize">大小</th>
+        <th data-i18n="thTime">修改时间</th><th data-i18n="thOp">操作</th>
+      </tr></thead>
+      <tbody id="csvBody"></tbody>
+    </table>
+  </div>
+  <div class="note" style="text-align:center;margin:14px 0" data-i18n="footNote">
+    数据同时保存在终端 /sdcard/Android/data/com.thermal.stress/files/logs ，可用 adb pull 批量导出
+  </div>
+</div>
+
+<script>
+// ================= 多语言 =================
+const I18N = {
+  zh: {
+    title: 'UltraBARX StressLab (Performance Test Console)',
+    connOk: '已连接 · 每秒刷新', connOff: '连接中断，重试中…', connInit: '连接中…',
+    consoleUrl: '控制台地址',
+    warnBtn: '知道了', warnSuffix: '，已自动停止全部负载', warnSuffixAlert: '，仅提醒，负载继续运行', warnTrip: '超温保护触发 @{T}℃', warnAlertTrip: '温度提醒 @{T}℃',
+    cardLive: '实时系统负载', cardMem: '内存 / DDR', cardPower: '供电 / 电池',
+    cardChart: '实时温度曲线',
+    cardCpu: 'CPU 负载（烧核）', cpuOn: '启用 CPU 烧核', loadPct: '负载强度', cpuThreads: '烧核线程',
+    cardGpu: 'GPU 负载（OpenGL ES）', gpuOn: '启用 GPU 渲染', gpuLoad: '着色器复杂度',
+    gpuNote: 'GPU 渲染依赖终端屏幕：测试期间请保持终端上的应用在前台、屏幕常亮（应用已自动设置）。',
+    cardMemLoad: '内存 / DDR 负载', memOn: '启用内存读写', memMb: '占用内存',
+    cardIo: '存储 I/O 负载', ioOn: '启用持续读写（sync 落盘）', ioThreads: 'IO 线程',
+    stopAll: '■ 一键停止全部负载',
+    cardStep: '自动化阶梯测试', stepRange: '起始 / 终止 / 步进 (%)', stepSec: '每档时长（秒） / 烧核线程',
+    stepStart: '开始阶梯测试', stepAbort: '中止',
+    cardProt: '超温保护 & Root 锁频', protModeLbl: '温度保护',
+    protOff: '关闭（不提醒）', protAlert: '仅提醒（不停负载）', protStop: '提醒并自动停止', protThr: '保护阈值',
+    freqLock: 'CPU 频率锁定', freqFree: '未锁定（跟随调度器）',
+    rootDetect: '检测 Root', rootApply: '应用锁频', rootUnlock: '还原',
+    cardCsv: '测试记录（CSV）', refresh: '刷新列表',
+    thName: '文件名', thSize: '大小', thTime: '修改时间', thOp: '操作',
+    csvEmpty: '暂无记录（开始一次负载即自动生成，每秒一条）', csvDownload: '下载 CSV', csvWriting: '正在写入',
+    csvZip: '打包下载', csvDel: '删除所选',
+    csvDelConfirm: '确定删除所选的 {n} 条测试记录？此操作不可恢复。',
+    csvDelDone: '已删除 {d} 条', csvDelSkip: '（{s} 条被跳过：正在写入或不存在）', csvNone: '请先勾选记录',
+    footNote: '数据同时保存在终端 /sdcard/Android/data/com.thermal.stress/files/logs ，可用 adb pull 批量导出',
+    maxTemp: '最高', battery: '电池',
+    cpuUtilLive: 'CPU 实时占用（整机）', gpuUtilLive: 'GPU 实时占用（PowerVR）', gpuMem: 'GPU 显存占用（UMA）',
+    cfgLoads: '设定负载', off: '关', coreUnit: ' 核', threadUnit: '线程', idleNow: '当前无负载（空闲）',
+    memUsed: '内存占用', memAvail: '可用内存', ddrTemp: 'DDR 温度',
+    ddrNote: '注：本机 DDR 频率无 sysfs 节点，内核未开放',
+    batt: '电池', battNone: '未安装 / 无电量计', powerSrc: '供电方式', powerUsb: 'USB / DC 外部供电',
+    powerNone: '未检测到供电', battTempNote: '电池温度可参考上方"电池"温度卡（PMIC 温度）',
+    battCap: '电量', battStatus: '状态', battVolt: '电压', battHealth: '健康',
+    extPower: '外部供电', plugged: '已接入', unplugged: '未接入',
+    stCharging: '充电中', stDischarging: '放电中', stFull: '已充满', stNotCharging: '未充电', stUnknown: '未知',
+    hwFreq: 'CPU 频率', hwMax: '最高', hwCool: '散热降频', coolNone: '无',
+    throttling: '⚠ 正在降频', running: '● 负载运行中', idle: '○ 空闲', gear: '档',
+    stepRun: '进行中', stepLoad: '负载', stepLeft: '剩余', stepMin: '分', stepS: '秒',
+    rootAvail: '可用', rootUnavail: '不可用（仍可免 root 做全部负载测试）', rootUnknown: '未检测',
+    rootLocked: '已锁定', protLine: '保护阈值 ',
+    ambient: '环境温度', ambientHint: '设备无环境温度传感器，请按实测室温手动填写，将记入CSV',
+    ambientDev: '室温',
+    opFail: '操作失败'
+  },
+  en: {
+    title: 'UltraBARX StressLab (Performance Test Console)',
+    connOk: 'Connected · 1s refresh', connOff: 'Disconnected, retrying…', connInit: 'Connecting…',
+    consoleUrl: 'Console URL',
+    warnBtn: 'Dismiss', warnSuffix: ' — all loads stopped automatically', warnSuffixAlert: ' — alert only, loads keep running', warnTrip: 'Overheat protection tripped @{T}℃', warnAlertTrip: 'Temperature alert @{T}℃',
+    cardLive: 'Live System Load', cardMem: 'Memory / DDR', cardPower: 'Power / Battery',
+    cardChart: 'Live Temperature Curves',
+    cardCpu: 'CPU Load (Burn)', cpuOn: 'Enable CPU burn', loadPct: 'Load intensity', cpuThreads: 'Burn threads',
+    cardGpu: 'GPU Load (OpenGL ES)', gpuOn: 'Enable GPU rendering', gpuLoad: 'Shader complexity',
+    gpuNote: 'GPU rendering depends on the device screen: keep the app in foreground and screen on during tests (handled automatically).',
+    cardMemLoad: 'Memory / DDR Load', memOn: 'Enable memory R/W', memMb: 'Memory to occupy',
+    cardIo: 'Storage I/O Load', ioOn: 'Enable continuous R/W (sync)', ioThreads: 'I/O threads',
+    stopAll: '■ Stop ALL loads',
+    cardStep: 'Automated Step Test', stepRange: 'Start / End / Step (%)', stepSec: 'Seconds per stage / Burn threads',
+    stepStart: 'Start step test', stepAbort: 'Abort',
+    cardProt: 'Overheat Protection & Root Freq Lock', protModeLbl: 'Protection',
+    protOff: 'Off (no alert)', protAlert: 'Alert only (keep loads)', protStop: 'Alert & auto stop', protThr: 'Threshold',
+    freqLock: 'CPU frequency lock', freqFree: 'Unlocked (follow governor)',
+    rootDetect: 'Detect root', rootApply: 'Apply lock', rootUnlock: 'Restore',
+    cardCsv: 'Test Records (CSV)', refresh: 'Refresh',
+    thName: 'File', thSize: 'Size', thTime: 'Modified', thOp: 'Action',
+    csvEmpty: 'No records (generated automatically once a load starts, 1 row/sec)', csvDownload: 'Download CSV', csvWriting: 'writing',
+    csvZip: 'Zip Selected', csvDel: 'Delete Selected',
+    csvDelConfirm: 'Delete {n} selected record(s)? This cannot be undone.',
+    csvDelDone: '{d} deleted', csvDelSkip: ' ({s} skipped: writing or missing)', csvNone: 'Select records first',
+    footNote: 'Data is also stored on the device at /sdcard/Android/data/com.thermal.stress/files/logs — batch export via adb pull',
+    maxTemp: 'Max', battery: 'Battery',
+    cpuUtilLive: 'CPU usage (whole SoC)', gpuUtilLive: 'GPU usage (PowerVR)', gpuMem: 'GPU memory (UMA)',
+    cfgLoads: 'Configured loads', off: 'off', coreUnit: ' cores', threadUnit: 'thr', idleNow: 'No load running (idle)',
+    memUsed: 'Memory used', memAvail: 'Available', ddrTemp: 'DDR temp',
+    ddrNote: 'Note: DDR frequency is not exposed via sysfs on this device',
+    batt: 'Battery', battNone: 'Not installed / no fuel gauge', powerSrc: 'Power source', powerUsb: 'USB / DC external power',
+    powerNone: 'No power source detected', battTempNote: 'See the "Battery" temperature card above (PMIC temperature)',
+    battCap: 'Charge', battStatus: 'Status', battVolt: 'Voltage', battHealth: 'Health',
+    extPower: 'External power', plugged: 'Connected', unplugged: 'Not connected',
+    stCharging: 'Charging', stDischarging: 'Discharging', stFull: 'Full', stNotCharging: 'Not charging', stUnknown: 'Unknown',
+    hwFreq: 'CPU freq', hwMax: 'max', hwCool: 'Thermal throttling', coolNone: 'none',
+    throttling: '⚠ THROTTLING', running: '● Load running', idle: '○ Idle', gear: 'lvl',
+    stepRun: 'Running', stepLoad: 'load', stepLeft: 'left', stepMin: 'm', stepS: 's',
+    rootAvail: 'available', rootUnavail: 'unavailable (all load tests work without root)', rootUnknown: 'not detected',
+    rootLocked: 'locked', protLine: 'Protection ',
+    ambient: 'Ambient', ambientHint: 'The device has no ambient sensor — enter measured room temperature manually; saved into CSV',
+    ambientDev: 'Ambient',
+    opFail: 'Operation failed'
+  }
+};
+let lang = localStorage.getItem('ub_lang') || 'zh';
+function t(k){ return (I18N[lang] && I18N[lang][k]) || I18N.zh[k] || k; }
+function setLang(l){
+  lang = l; localStorage.setItem('ub_lang', l);
+  applyLang();
+  if (lastState) {
+    renderZones(lastState); renderHw(lastState); renderLive(lastState);
+    renderMem(lastState); renderPower(lastState); renderControls(lastState); renderCsv(lastState);
+    drawChart();
+  }
+}
+function applyLang(){
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.getElementById('langZh').className = lang === 'zh' ? 'active' : '';
+  document.getElementById('langEn').className = lang === 'en' ? 'active' : '';
+  document.getElementById('connText').textContent = t('connInit');
+  document.querySelector('.amb-box').title = t('ambientHint');
+  refreshLabels();
+}
+function zoneName(z){ return z.key === 'battery' ? t('battery') : z.name; }
+
+const COLORS = { cpu:'#e53935', gpu:'#1e88e5', ddr:'#43a047', battery:'#fb8c00' };
+const OTHER = ['#8e24aa','#00acc1','#6d4c41','#757575'];
+const series = {};      // key -> {name,color,pts:[[t,v]]}
+let lastState = null;
+let threshold = 85;
+
+function zoneColor(k, i){ return COLORS[k] || OTHER[i % OTHER.length]; }
+
+async function post(url, data, cb){
+  const body = new URLSearchParams(data).toString();
+  try {
+    const r = await fetch(url, {method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'}, body});
+    const j = await r.json();
+    if (j.ok === false) alert(j.error || t('opFail'));
+    load();
+  } catch(e){ setConn(false); }
+  if (cb) cb();
+}
+
+function readConfig(){
+  return {
+    cpu: document.getElementById('cpuOn').checked ? 1:0,
+    threads: document.getElementById('cpuThreads').value,
+    load: document.getElementById('cpuLoad').value,
+    gpu: document.getElementById('gpuOn').checked ? 1:0,
+    gpuload: document.getElementById('gpuLoad').value,
+    mem: document.getElementById('memOn').checked ? 1:0,
+    memmb: document.getElementById('memMb').value,
+    io: document.getElementById('ioOn').checked ? 1:0,
+    iothreads: document.getElementById('ioThreads').value
+  };
+}
+function pushConfig(){ post('/api/config', readConfig()); }
+
+// 控件绑定：开关即时下发，滑杆松手/变化时下发（避免拖动时刷屏）
+['cpuOn','gpuOn','memOn','ioOn'].forEach(id =>
+  document.getElementById(id).addEventListener('change', pushConfig));
+['cpuLoad','cpuThreads','gpuLoad','memMb','ioThreads'].forEach(id =>
+  document.getElementById(id).addEventListener('change', pushConfig));
+
+function pushProtect(){
+  post('/api/protect', {mode: document.getElementById('protMode').value,
+    threshold: document.getElementById('protThr').value});
+}
+document.getElementById('protMode').addEventListener('change', pushProtect);
+document.getElementById('protThr').addEventListener('input', e => {
+  document.getElementById('protV').textContent = e.target.value + ' ℃';
+});
+document.getElementById('protThr').addEventListener('change', pushProtect);
+
+// 滑杆数值标签
+function bindLabel(id, fmt){
+  const el = document.getElementById(id);
+  const lab = document.getElementById(id+'V');
+  const upd = () => lab.textContent = fmt(el.value);
+  el.addEventListener('input', upd); upd();
+  return upd;
+}
+const labelUpdaters = [];
+labelUpdaters.push(bindLabel('cpuLoad', v=>v+'%'));
+labelUpdaters.push(bindLabel('cpuThreads', v=>v+t('coreUnit')));
+labelUpdaters.push(bindLabel('gpuLoad', v=>v+'%'));
+labelUpdaters.push(bindLabel('memMb', v=>v+' MB'));
+labelUpdaters.push(bindLabel('ioThreads', v=>v));
+function refreshLabels(){ labelUpdaters.forEach(f=>f()); }
+
+function startStep(){
+  post('/api/step/start', {
+    start: document.getElementById('stStart').value,
+    end: document.getElementById('stEnd').value,
+    step: document.getElementById('stStep').value,
+    seconds: document.getElementById('stSec').value,
+    threads: document.getElementById('stThreads').value
+  });
+}
+function lockFreq(){
+  const f = document.getElementById('rootFreq').value;
+  rootFreqTouched = 0;
+  if (!f) { post('/api/root/unlock',{},load); return; }
+  post('/api/root/lock', {freq: f}, load);
+}
+// 用户正在操作锁频下拉框时，禁止轮询覆盖其选择（3 秒窗口）
+let rootFreqTouched = 0;
+document.getElementById('rootFreq').addEventListener('change', ()=>{ rootFreqTouched = Date.now(); });
+
+function setConn(ok){
+  document.getElementById('connDot').className = 'dot' + (ok?'':' off');
+  document.getElementById('connText').textContent = ok ? t('connOk') : t('connOff');
+}
+
+// 环境温度：默认 27，本地记忆，手动修改即下发并记入 CSV
+(function(){
+  const el = document.getElementById('ambientInput');
+  const saved = localStorage.getItem('ub_ambient');
+  if (saved !== null) el.value = saved;
+  const send = () => {
+    let v = parseFloat(el.value);
+    if (isNaN(v)) v = '';
+    else { v = Math.round(v*2)/2; if (v < -10) v=-10; if (v>80) v=80; el.value=v; }
+    localStorage.setItem('ub_ambient', v === '' ? '' : String(v));
+    post('/api/ambient', {temp: v === '' ? '' : String(v)});
+  };
+  el.addEventListener('change', send);
+  setTimeout(send, 300);
+})();
+function syncAmbient(s){
+  const el = document.getElementById('ambientInput');
+  if (document.activeElement !== el && s.ambientC !== null && s.ambientC !== undefined
+      && String(el.value) !== String(s.ambientC)) {
+    el.value = s.ambientC;
+  }
+}
+
+// ================= 渲染 =================
+function renderZones(s){
+  const grid = document.getElementById('zoneGrid');
+  const noBatt = s.power && s.power.battPresent === false;
+  let html = '';
+  s.zones.forEach((z,i) => {
+    const col = zoneColor(z.key, i);
+    if (z.key === 'battery' && noBatt) {
+      html += `<div class="card zone" style="border-left-color:${col}">
+        <div class="zname">${zoneName(z)}</div>
+        <div class="ztemp" style="color:${col}">--</div>
+        <div class="zmax">${t('maxTemp')} --</div></div>`;
+      return;
+    }
+    const freqLine = (z.key === 'cpu')
+      ? `<div class="zmax" style="color:#e53935;font-weight:700">FREQ ${s.cpuFreqMhz>0?s.cpuFreqMhz+' MHz':'--'}（${t('hwMax')} ${s.cpuMaxMhz>0?s.cpuMaxMhz+' MHz':'--'}）</div>` : '';
+    html += `<div class="card zone" style="border-left-color:${col}">
+      <div class="zname">${zoneName(z)}</div>
+      <div class="ztemp" style="color:${col}">${z.temp.toFixed(1)}<span style="font-size:16px">℃</span></div>
+      ${freqLine}
+      <div class="zmax">${t('maxTemp')} ${z.max.toFixed(1)}℃</div></div>`;
+  });
+  grid.innerHTML = html;
+  // 累积曲线
+  s.zones.forEach((z,i) => {
+    if (z.key === 'battery' && noBatt) { delete series[z.key]; return; }
+    if (!series[z.key]) series[z.key] = {name:zoneName(z), color:zoneColor(z.key,i), pts:[]};
+    const arr = series[z.key].pts;
+    if (!arr.length || arr[arr.length-1][0] !== s.time) arr.push([s.time, z.temp]);
+    if (arr.length > 1800) arr.shift();
+    series[z.key].name = zoneName(z);
+  });
+}
+
+function utilColor(p){ return p >= 85 ? '#e53935' : (p >= 50 ? '#fb8c00' : '#43a047'); }
+function bar(p, color){
+  if (p < 0) return '<div class="ubar"><i style="width:0%"></i></div>';
+  return `<div class="ubar"><i style="width:${p}%;background:${color||utilColor(p)}"></i></div>`;
+}
+
+function renderLive(s){
+  const cpu = s.cpuUtil, gpu = s.gpuUtil;
+  let cores = '';
+  (s.cores||[]).forEach((v,i) => {
+    cores += `<div class="corebar"><div class="ubar">${bar(v)}</div>C${i} ${v<0?'-':v+'%'}</div>`;
+  });
+  const c = s.cfg;
+  const req = c.anyOn
+    ? `<div class="kv" style="margin-top:8px">${t('cfgLoads')}：CPU ${c.cpuOn?c.cpuLoad+'% × '+c.cpuThreads+t('coreUnit'):t('off')} ｜ GPU ${c.gpuOn?c.gpuLoad+'%':t('off')} ｜ ${t('cardMem')} ${c.memOn?c.memMb+'MB':t('off')} ｜ IO ${c.ioOn?c.ioThreads+t('threadUnit'):t('off')}</div>`
+    : `<div class="kv" style="margin-top:8px;color:#90a4ae">${t('idleNow')}</div>`;
+  document.getElementById('loadStats').innerHTML =
+    `<div class="ubox"><div class="ulabel"><span>${t('cpuUtilLive')}</span><b style="color:${utilColor(cpu)}">${cpu<0?'--':cpu+'%'}</b></div>${bar(cpu)}<div class="cores">${cores}</div></div>`+
+    `<div class="ubox"><div class="ulabel"><span>${t('gpuUtilLive')}</span><b style="color:${utilColor(gpu)}">${gpu<0?'--':gpu+'%'}</b></div>${bar(gpu)}</div>`+
+    `<div class="kv">${t('gpuMem')}：<b>${s.gpuMemMb<0?'--':s.gpuMemMb+' MB'}</b></div>`+
+    req;
+}
+
+function renderMem(s){
+  const total = s.memTotalMb, avail = s.memAvailMb;
+  const used = Math.max(0, total - avail);
+  const pct = total > 0 ? Math.round(used/total*100) : 0;
+  const ddr = (s.zones.find(z=>z.key==='ddr')||{}).temp;
+  document.getElementById('memStats').innerHTML =
+    `<div class="ubox"><div class="ulabel"><span>${t('memUsed')} ${used} / ${total} MB</span><b>${pct}%</b></div>${bar(pct)}</div>`+
+    `<div class="kv">${t('memAvail')}：<b>${avail} MB</b><br>${t('ddrTemp')}：<b>${ddr!==undefined?ddr+' ℃':'--'}</b><br>${t('ddrNote')}</div>`;
+}
+
+function renderPower(s){
+  const p = s.power || {};
+  const stMap = {Charging:t('stCharging'), Discharging:t('stDischarging'), Full:t('stFull'),
+    NotCharging:t('stNotCharging'), Unknown:t('stUnknown')};
+  let html;
+  if (!p.battPresent) {
+    html = `<div class="kv">${t('batt')}：<b>${t('battNone')}</b><br>${t('powerSrc')}：<b style="color:#43a047">${p.usbOnline?t('powerUsb'):t('powerNone')}</b><br>${t('battTempNote')}</div>`;
+  } else {
+    html = `<div class="ubox"><div class="ulabel"><span>${t('battCap')}</span><b>${p.battCapacity<0?'--':p.battCapacity+'%'}</b></div>${bar(p.battCapacity, '#1e88e5')}</div>`+
+      `<div class="kv">${t('battStatus')}：<b>${stMap[p.battStatus]||p.battStatus||'--'}</b><br>${t('battVolt')}：<b>${p.battVoltageMv<0?'--':(p.battVoltageMv/1000).toFixed(2)+' V'}</b><br>${t('battHealth')}：<b>${p.battHealth||'--'}</b><br>${t('extPower')}：<b>${p.usbOnline?t('plugged'):t('unplugged')}</b></div>`;
+  }
+  document.getElementById('powerStats').innerHTML = html;
+}
+
+function renderHw(s){
+  const cool = s.cooling.map(c=>c.type+'='+t('gear')+c.state).join('，') || t('coolNone');
+  const throttling = s.cooling.some(c=>c.state>0);
+  document.getElementById('hwLine').innerHTML =
+    `<span>${t('hwFreq')}：<b>${s.cpuFreqMhz<0?'-':s.cpuFreqMhz+' MHz'}</b>（${t('hwMax')} ${s.cpuMaxMhz<0?'-':s.cpuMaxMhz+' MHz'}）</span>`+
+    `<span>${t('hwCool')}：${cool} ${throttling?`<b style="color:#e53935">${t('throttling')}</b>`:''}</span>`+
+    `<span class="${s.cfg.anyOn?'running-tag':''}">${s.cfg.anyOn?t('running'):t('idle')}</span>`;
+}
+
+function renderControls(s){
+  const c = s.cfg;
+  const set = (id,v) => { const e=document.getElementById(id); if(document.activeElement!==e) e.value=v; };
+  const chk = (id,v) => { const e=document.getElementById(id); if(document.activeElement!==e) e.checked=v; };
+  chk('cpuOn',c.cpuOn); set('cpuLoad',c.cpuLoad); set('cpuThreads',c.cpuThreads);
+  chk('gpuOn',c.gpuOn); set('gpuLoad',c.gpuLoad);
+  chk('memOn',c.memOn); set('memMb',c.memMb);
+  chk('ioOn',c.ioOn); set('ioThreads',c.ioThreads);
+  document.getElementById('cpuLoadV').textContent = c.cpuLoad+'%';
+  document.getElementById('cpuThreadsV').textContent = c.cpuThreads+t('coreUnit');
+  document.getElementById('gpuLoadV').textContent = c.gpuLoad+'%';
+  document.getElementById('memMbV').textContent = c.memMb+' MB';
+  document.getElementById('ioThreadsV').textContent = c.ioThreads;
+  const pm = document.getElementById('protMode');
+  if(document.activeElement!==pm){
+    const m = (s.protect.mode!==undefined && s.protect.mode!==null)
+      ? s.protect.mode : (s.protect.enabled ? 2 : 0);
+    pm.value = String(m);
+  }
+  if(document.activeElement!==document.getElementById('protThr')){
+    document.getElementById('protThr').value = Math.round(s.protect.threshold);
+    document.getElementById('protV').textContent = Math.round(s.protect.threshold)+' ℃';
+  }
+  threshold = s.protect.threshold;
+  // 阶梯
+  const sp = document.getElementById('stepProg');
+  if (s.step.running) {
+    const sec = s.step.remaining, m = Math.floor(sec/60), ss = sec%60;
+    sp.textContent = `${t('stepRun')}：${s.step.pct}% ${t('stepLoad')} · ${t('stepLeft')} ${m}${t('stepMin')}${String(ss).padStart(2,'0')}${t('stepS')}`;
+  } else sp.textContent = '';
+  // root
+  const rs = document.getElementById('rootStatus');
+  const locked = s.root.lockedKhz > 0 ? ` · ${t('rootLocked')} ${Math.round(s.root.lockedKhz/1000)}MHz` : '';
+  const stateText = {available:t('rootAvail')+locked, unavailable:t('rootUnavail'), unknown:t('rootUnknown')};
+  rs.textContent = 'Root：' + (stateText[s.root.state] || s.root.state);
+  const sel = document.getElementById('rootFreq');
+  // 用户正在选择/刚选择完时不覆盖下拉框，避免 Apply 前被轮询重置回旧锁定值
+  if (document.activeElement !== sel && Date.now() - rootFreqTouched > 3000) {
+    sel.innerHTML = `<option value="">${t('freqFree')}</option>` +
+      s.root.freqs.map(f=>`<option value="${f}">${Math.round(f/1000)} MHz</option>`).join('');
+    sel.value = s.root.lockedKhz > 0 ? String(s.root.lockedKhz) : '';
+  }
+}
+
+// ---- 记录多选 / 删除 / 打包 ----
+const csvSel = new Set();   // 勾选的文件名（跨秒级刷新保持）
+function csvSelNames(){
+  return [...document.querySelectorAll('.csvSel:checked')].map(c => c.value);
+}
+function csvAllToggle(master){
+  document.querySelectorAll('.csvSel:not(:disabled)').forEach(c => {
+    c.checked = master.checked;
+    c.checked ? csvSel.add(c.value) : csvSel.delete(c.value);
+  });
+}
+function csvZip(){
+  const names = csvSelNames();
+  // 未勾选 = 打包全部
+  location.href = '/api/csv/zip' + (names.length
+    ? '?names=' + encodeURIComponent(names.join(',')) : '');
+}
+async function csvDel(){
+  const names = csvSelNames();
+  if (!names.length) { alert(t('csvNone')); return; }
+  if (!confirm(t('csvDelConfirm').replace('{n}', names.length))) return;
+  const body = new URLSearchParams({names: names.join(',')}).toString();
+  try {
+    const r = await fetch('/api/csv/delete', {method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'}, body});
+    const j = await r.json();
+    if (j.ok) {
+      names.forEach(n => csvSel.delete(n));
+      let msg = t('csvDelDone').replace('{d}', j.deleted);
+      if (j.skipped && j.skipped.length) msg += ' ' + t('csvDelSkip').replace('{s}', j.skipped.length);
+      alert(msg);
+    } else alert(j.error || t('opFail'));
+  } catch(e){ setConn(false); }
+  load();
+}
+
+function renderCsv(s){
+  const tb = document.getElementById('csvBody');
+  // 同步表头全选框状态
+  const all = document.getElementById('csvAll');
+  if (all) all.checked = s.csv.length > 0 &&
+    s.csv.every(f => f.current || csvSel.has(f.name));
+  if (!s.csv.length) {
+    tb.innerHTML = `<tr><td colspan="5" style="color:#90a4ae">${t('csvEmpty')}</td></tr>`;
+    return;
+  }
+  tb.innerHTML = s.csv.map(f => {
+    const kb = f.size >= 1048576 ? (f.size/1048576).toFixed(2)+' MB' : Math.round(f.size/1024)+' KB';
+    const cur = f.current ? `<span class="tag">${t('csvWriting')}</span>` : '';
+    const ck = csvSel.has(f.name) ? ' checked' : '';
+    // 正在写入的当前记录：不可勾选（不参与删除），打包时自动包含
+    const box = f.current
+      ? `<input type="checkbox" disabled title="writing">`
+      : `<input type="checkbox" class="csvSel" value="${f.name}"${ck}
+           onchange="this.checked ? csvSel.add(this.value) : csvSel.delete(this.value)">`;
+    return `<tr><td>${box}</td><td>${f.name}${cur}</td><td>${kb}</td><td>${f.mtime}</td>
+      <td><a href="/api/csv?name=${encodeURIComponent(f.name)}" target="_blank">${t('csvDownload')}</a></td></tr>`;
+  }).join('');
+}
+
+// ================= 曲线图 =================
+const cv = document.getElementById('chart');
+const ctx = cv.getContext('2d');
+function resizeCanvas(){
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  cv.width = w*dpr; cv.height = h*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', resizeCanvas);
+
+function drawChart(){
+  const w = cv.clientWidth, h = cv.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  const pad = {l:56,r:130,t:14,b:28};
+  const keys = Object.keys(series);
+  let tmin=Infinity,tmax=-Infinity,vmin=Infinity,vmax=-Infinity,has=false;
+  keys.forEach(k => series[k].pts.forEach(p=>{
+    has=true; tmin=Math.min(tmin,p[0]); tmax=Math.max(tmax,p[0]);
+    vmin=Math.min(vmin,p[1]); vmax=Math.max(vmax,p[1]);
+  }));
+  if(!has) return;
+  vmax = Math.max(vmax, threshold+2);
+  let lo = Math.floor((vmin-5)/5)*5, hi = Math.ceil((vmax+3)/5)*5;
+  if (hi-lo < 20){ const mid=(lo+hi)/2; lo=mid-10; hi=mid+10; }
+  if (tmin===tmax) tmax=tmin+1;
+  const X=t=>pad.l+(t-tmin)/(tmax-tmin)*(w-pad.l-pad.r);
+  const Y=v=>h-pad.b-(v-lo)/(hi-lo)*(h-pad.t-pad.b);
+  ctx.strokeStyle='#e0e0e0'; ctx.lineWidth=1; ctx.fillStyle='#78909c'; ctx.font='11px sans-serif';
+  ctx.textAlign='right';
+  for(let g=lo;g<=hi;g+=5){
+    ctx.beginPath(); ctx.moveTo(pad.l,Y(g)); ctx.lineTo(w-pad.r,Y(g)); ctx.stroke();
+    if(g%10===0) ctx.fillText(g+'℃', pad.l-6, Y(g)+4);
+  }
+  ctx.textAlign='center';
+  const span=(tmax-tmin)/1000;
+  for(let i=0;i<=4;i++){
+    ctx.fillText(Math.round(span*i/4)+'s', pad.l+(w-pad.l-pad.r)*i/4, h-8);
+  }
+  // 阈值线
+  if (threshold>=lo && threshold<=hi){
+    ctx.strokeStyle='#e53935'; ctx.setLineDash([8,6]);
+    ctx.beginPath(); ctx.moveTo(pad.l,Y(threshold)); ctx.lineTo(w-pad.r,Y(threshold)); ctx.stroke();
+    ctx.setLineDash([]); ctx.fillStyle='#e53935'; ctx.textAlign='left';
+    ctx.fillText(t('protLine')+threshold+'℃', w-pad.r+6, Y(threshold)+4);
+  }
+  // 曲线
+  keys.forEach(k=>{
+    const s2=series[k], pts=s2.pts; if(!pts.length) return;
+    ctx.strokeStyle=s2.color; ctx.lineWidth=2; ctx.beginPath();
+    pts.forEach((p,i)=>{ const x=X(p[0]),y=Y(p[1]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+    ctx.stroke();
+    const last=pts[pts.length-1];
+    ctx.fillStyle=s2.color; ctx.beginPath(); ctx.arc(X(last[0]),Y(last[1]),3.5,0,7); ctx.fill();
+    ctx.textAlign='left'; ctx.font='bold 12px sans-serif';
+    ctx.fillText(`${s2.name} ${last[1].toFixed(1)}℃`, w-pad.r+6, Y(last[1])+4);
+    ctx.font='11px sans-serif';
+  });
+}
+
+// ================= 轮询 =================
+async function load(){
+  try {
+    const r = await fetch('/api/state', {cache:'no-store'});
+    const s = await r.json();
+    lastState = s; setConn(true);
+    const ambTxt = (s.ambientC===null||s.ambientC===undefined) ? '' :
+      ` &nbsp;|&nbsp; ${t('ambientDev')} ${s.ambientC}℃`;
+    document.getElementById('devinfo').innerHTML =
+      `${s.device.model} · Android ${s.device.android} · ${s.device.abi} &nbsp;|&nbsp; ${t('consoleUrl')} ${s.device.url}${ambTxt}`;
+    syncAmbient(s);
+    renderZones(s); renderHw(s); renderLive(s); renderMem(s); renderPower(s); renderControls(s); renderCsv(s);
+    const wb = document.getElementById('warnBox');
+    if (s.protect.trip){
+      wb.classList.add('show');
+      // 服务器 trip 文本含中文，只取温度值，用当前语言按是否已停负载重新渲染
+      const m = String(s.protect.trip).match(/([\d.]+)\s*[℃°]/);
+      const tmp = m ? m[1] : '--';
+      const titleKey = s.protect.stopped ? 'warnTrip' : 'warnAlertTrip';
+      const suffixKey = s.protect.stopped ? 'warnSuffix' : 'warnSuffixAlert';
+      document.getElementById('warnText').textContent =
+        '⚠ ' + t(titleKey).replace('{T}', tmp) + t(suffixKey);
+    }
+    else wb.classList.remove('show');
+    drawChart();
+  } catch(e){ setConn(false); }
+}
+applyLang();
+resizeCanvas();
+load();
+setInterval(load, 1000);
+setInterval(resizeCanvas, 5000);
+</script>
+</body>
+</html>

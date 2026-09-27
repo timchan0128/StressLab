@@ -1,0 +1,66 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+// ===== 自动版本号：每次真正打包（执行 preBuild）versionCode 自动 +1，versionName = 1.0.<code> =====
+def versionPropsFile = file('version.properties')
+def versionProps = new Properties()
+if (versionPropsFile.canRead()) {
+    versionPropsFile.withInputStream { versionProps.load(it) }
+}
+def autoVersionCode = (versionProps['VERSION_CODE'] ?: '0').toInteger() + 1
+
+android {
+    namespace 'com.thermal.stress'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.thermal.stress"
+        minSdk 24
+        targetSdk 29
+        versionCode autoVersionCode
+        versionName "1.0.${autoVersionCode}"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    // Netty 打包冲突排除（LineOS 插件 SDK 依赖）
+    packagingOptions {
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/io.netty.versions.properties'
+    }
+
+    // 只有真正执行打包时才落盘 +1（gradle tasks / analyze 不计数）
+    tasks.register('bumpVersionCode') {
+        doLast {
+            versionProps['VERSION_CODE'] = autoVersionCode.toString()
+            versionPropsFile.withOutputStream { versionProps.store(it, 'auto version; do not edit') }
+        }
+    }
+    tasks.matching { it.name == 'preBuild' }.configureEach {
+        dependsOn 'bumpVersionCode'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+dependencies {
+    // LineOS 插件协议 v2（宿主 127.0.0.1:39001）
+    implementation 'com.github.yaobin-kid:ultrabarIntegrated:1.0.12'
+    implementation 'io.netty:netty-all:4.1.94.Final'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    implementation 'org.slf4j:slf4j-simple:2.0.7'
+    // 插件调试页 HTTP 服务
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'
+}
