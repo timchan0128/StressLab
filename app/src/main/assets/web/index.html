@@ -45,8 +45,74 @@
   .zone .zname { font-size: 13px; color: #78909c; }
   .zone .ztemp { font-size: 34px; font-weight: 700; line-height: 1.15; margin: 2px 0; }
   .zone .zmax { font-size: 12px; color: #90a4ae; }
-  .chart-card { grid-column: 1 / -1; }
+  .chart-card { grid-column: 1 / -1; --pl:56px; --pr:130px; }
   #chart { width: 100%; height: 320px; display: block; }
+  .measure { margin-bottom:10px; font-size:12.5px; color:#607d8b; user-select:none; }
+  .measure .mhead { display:flex; justify-content:space-between; gap:12px;
+    flex-wrap:wrap; margin-bottom:4px; }
+  .measure .msum { color:#37474f; font-weight:bold; white-space:nowrap; }
+  .measure .msum .mA { color:#1e88e5; } .measure .msum .mB { color:#e53935; }
+  .measure .msum .mDur { color:#00897b; margin-left:8px; }
+  /* 滑块轨道的左右边界必须与 canvas 绘图区（pad.l/pad.r）严格对齐，统一由 CSS 变量驱动 */
+  .mslider { position:relative; height:22px; margin:0; user-select:none; }
+  .mslider .mtag { position:absolute; top:2px; width:18px; height:18px; line-height:15px;
+    text-align:center; border-radius:50%; color:#fff; font-size:11px; font-weight:bold; }
+  .mslider .mtag.a { background:#1e88e5; left:calc(var(--pl)/2 - 9px); }
+  .mslider .mtag.b { background:#e53935; right:calc(var(--pr)/2 - 9px); }
+  .range2 { position:absolute; top:0; bottom:0; left:var(--pl); right:var(--pr); height:22px; }
+  .range2 .track { position:absolute; top:9px; left:0; right:0; height:4px;
+    background:#dde3e8; border-radius:2px; }
+  .range2 .fill { position:absolute; top:9px; height:4px; background:#90caf9;
+    border-radius:2px; }
+  .range2 input[type=range] { position:absolute; top:0; left:0; width:100%; height:22px;
+    margin:0; -webkit-appearance:none; appearance:none; background:transparent;
+    pointer-events:none; }
+  /* WebKit/Blink 原生滑块在端点处 thumb 中心会内缩半个 thumb（按内容宽 18px 计，半宽 9px；
+     边框不参与定位），把输入框横向外扩 18px 并左移 9px，thumb 中心即严格落在轨道（=绘图区）端点 */
+  @supports (-webkit-appearance:none) {
+    .range2 input[type=range] { left:-9px; width:calc(100% + 18px); }
+  }
+  .range2 input[type=range]::-webkit-slider-runnable-track { background:none; border:none; height:22px; }
+  .range2 input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; pointer-events:auto;
+    width:18px; height:18px; border-radius:50%; border:2px solid #fff; cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,.35); margin-top:2px; }
+  .range2 #rngA::-webkit-slider-thumb { background:#1e88e5; }
+  .range2 #rngB::-webkit-slider-thumb { background:#e53935; }
+  .range2 input[type=range]::-moz-range-track { background:transparent; height:22px; }
+  .range2 input[type=range]::-moz-range-thumb { pointer-events:auto; width:14px; height:14px;
+    border-radius:50%; border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.35); cursor:pointer; }
+  .range2 #rngA::-moz-range-thumb { background:#1e88e5; }
+  .range2 #rngB::-moz-range-thumb { background:#e53935; }
+  .measure .mchips { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  .measure .mchip { display:inline-flex; align-items:center; gap:6px; background:#f4f6f8;
+    border:1px solid #e3e8ec; border-radius:12px; padding:2px 10px; white-space:nowrap; }
+  .measure .mchip i { width:9px; height:9px; border-radius:50%; flex:none; }
+  .measure .mchip b { color:#37474f; }
+  .measure .mchip .up { color:#e53935; font-weight:bold; }
+  .measure .mchip .down { color:#1e88e5; font-weight:bold; }
+  .measure .mchip .flat { color:#78909c; font-weight:bold; }
+  .measure .mchip .mh { color:#e53935; } .measure .mchip .ml { color:#1e88e5; }
+  .measure .mchip .msep { color:#cfd8dc; }
+  .zbar { display:flex; align-items:center; gap:8px; margin:2px 0 2px; user-select:none; }
+  .zbar button { min-width:30px; height:26px; padding:0 10px; border:1px solid #cfd8dc;
+    background:#fff; border-radius:5px; font-size:13px; color:#37474f; cursor:pointer; line-height:1; }
+  .zbar button:hover:not(:disabled) { background:#eef4fb; border-color:#90caf9; }
+  .zbar button:disabled { opacity:.4; cursor:default; }
+  .zbar button.on { background:#e3f2fd; border-color:#1e88e5; color:#1565c0; font-weight:bold; }
+  .zbar .zinfo { font-size:12px; color:#78909c; }
+  .tlover { position:relative; height:34px; margin-top:8px; border-radius:5px;
+    background:#eef1f4; cursor:pointer; user-select:none; }
+  #tlSpark { position:absolute; inset:0; width:100%; height:100%; }
+  .tlwin { position:absolute; top:0; bottom:0; min-width:10px; display:none; background:rgba(30,136,229,.16);
+    border-left:2px solid #1e88e5; border-right:2px solid #1e88e5; cursor:grab; box-sizing:border-box; }
+  .tlwin.dragging { cursor:grabbing; }
+  .tlwin .tlh { position:absolute; top:0; bottom:0; width:10px; z-index:2; }
+  .tlwin .tlh.l { left:-6px; cursor:ew-resize; } .tlwin .tlh.r { right:-6px; cursor:ew-resize; }
+  .tlwin .tllbl { position:absolute; top:1px; left:50%; transform:translateX(-50%);
+    font-size:10px; color:#1565c0; background:rgba(255,255,255,.85); border-radius:8px;
+    padding:0 7px; white-space:nowrap; pointer-events:none; }
+  .tltime { display:flex; justify-content:space-between; font-size:10.5px; color:#90a4ae;
+    margin-top:2px; user-select:none; }
   .hw { display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; color: #455a64; }
   .ubox { margin: 12px 0; font-size: 13px; color: #37474f; }
   .ulabel { display:flex; justify-content:space-between; margin-bottom:3px; }
@@ -146,7 +212,39 @@
   <div class="grid">
     <div class="card chart-card">
       <h2 data-i18n="cardChart">实时温度曲线</h2>
+      <div class="measure" id="measure">
+        <div class="mhead">
+          <span data-i18n="measHint">拖动 A / B 两个滑块选择曲线上的两个时间点，自动统计用时与温度变化</span>
+          <span class="msum" id="mSum"></span>
+        </div>
+        <div class="mchips" id="mChips"></div>
+      </div>
+      <div class="zbar">
+        <button type="button" id="zoomOut" title="Zoom out">－</button>
+        <button type="button" id="zoomIn" title="Zoom in">＋</button>
+        <button type="button" id="zoomFit" data-i18n="zoomFit">全部</button>
+        <button type="button" id="zoomLive" data-i18n="zoomLive">最新</button>
+        <span class="zinfo" id="zoomInfo"></span>
+      </div>
+      <div class="mslider" id="mSlider">
+        <span class="mtag a">A</span>
+        <div class="range2">
+          <div class="track"></div>
+          <div class="fill" id="mFill"></div>
+          <input type="range" id="rngA" min="0" max="1000" value="0" step="1000">
+          <input type="range" id="rngB" min="0" max="1000" value="1000" step="1000">
+        </div>
+        <span class="mtag b">B</span>
+      </div>
       <canvas id="chart"></canvas>
+      <div class="tlover" id="tlOver" title="">
+        <canvas id="tlSpark"></canvas>
+        <div class="tlwin" id="tlWin">
+          <i class="tlh l" data-h="l"></i><i class="tlh r" data-h="r"></i>
+          <span class="tllbl" id="tlLbl"></span>
+        </div>
+      </div>
+      <div class="tltime"><span id="tlT0"></span><span id="tlT1"></span></div>
       <div class="hw" style="margin-top:10px" id="hwLine"></div>
     </div>
   </div>
@@ -302,6 +400,13 @@ const I18N = {
     rootLocked: '已锁定', protLine: '保护阈值 ',
     ambient: '环境温度', ambientHint: '设备无环境温度传感器，请按实测室温手动填写，将记入CSV',
     ambientDev: '室温',
+    measHint: '拖动 A / B 两个滑块选择曲线上的两个时间点，自动统计用时与温度变化',
+    measDur: '用时', measNoData: '等待温度数据…',
+    measHigh: '最高', measLow: '最低',
+    zoomFit: '全部', zoomLive: '最新', zoomWin: '窗口', zoomTotal: '全程',
+    zoomInTitle: '放大（看更短时间）', zoomOutTitle: '缩小（看更长时间）',
+    zoomFitTitle: '显示全部数据', zoomLiveTitle: '跳到最新数据',
+    tlTitle: '拖动中间平移、拖两侧边缘缩放；点击空白处跳转',
     opFail: '操作失败'
   },
   en: {
@@ -347,6 +452,13 @@ const I18N = {
     rootLocked: 'locked', protLine: 'Protection ',
     ambient: 'Ambient', ambientHint: 'The device has no ambient sensor — enter measured room temperature manually; saved into CSV',
     ambientDev: 'Ambient',
+    measHint: 'Drag the A / B handles to pick two points on the curves — elapsed time and temperature change are computed automatically',
+    measDur: 'Elapsed', measNoData: 'Waiting for temperature data…',
+    measHigh: 'Max', measLow: 'Min',
+    zoomFit: 'All', zoomLive: 'Live', zoomWin: 'Window', zoomTotal: 'Total',
+    zoomInTitle: 'Zoom in (shorter range)', zoomOutTitle: 'Zoom out (longer range)',
+    zoomFitTitle: 'Show all data', zoomLiveTitle: 'Jump to latest',
+    tlTitle: 'Drag the middle to pan, drag edges to zoom; click empty area to jump',
     opFail: 'Operation failed'
   }
 };
@@ -358,7 +470,7 @@ function setLang(l){
   if (lastState) {
     renderZones(lastState); renderHw(lastState); renderLive(lastState);
     renderMem(lastState); renderPower(lastState); renderControls(lastState); renderCsv(lastState);
-    drawChart();
+    refreshViews();
   }
 }
 function applyLang(){
@@ -369,6 +481,10 @@ function applyLang(){
   document.getElementById('langEn').className = lang === 'en' ? 'active' : '';
   document.getElementById('connText').textContent = t('connInit');
   document.querySelector('.amb-box').title = t('ambientHint');
+  btnIn.title=t('zoomInTitle'); btnOut.title=t('zoomOutTitle');
+  btnFit.title=t('zoomFitTitle'); btnLive.title=t('zoomLiveTitle');
+  btnFit.textContent=t('zoomFit'); btnLive.textContent=t('zoomLive');
+  tlOver.title=t('tlTitle');
   refreshLabels();
 }
 function zoneName(z){ return z.key === 'battery' ? t('battery') : z.name; }
@@ -516,7 +632,7 @@ function renderZones(s){
     if (!series[z.key]) series[z.key] = {name:zoneName(z), color:zoneColor(z.key,i), pts:[]};
     const arr = series[z.key].pts;
     if (!arr.length || arr[arr.length-1][0] !== s.time) arr.push([s.time, z.temp]);
-    if (arr.length > 1800) arr.shift();
+    if (arr.length > 7200) arr.shift();
     series[z.key].name = zoneName(z);
   });
 }
@@ -682,6 +798,11 @@ function renderCsv(s){
 }
 
 // ================= 曲线图 =================
+// 绘图区内边距是“滑块轨道 ↔ canvas 坐标”唯一对齐基准：
+// 左/右值同时通过 CSS 变量 --pl/--pr 驱动 .mslider/.range2 的水平位置，改这里两处自动同步
+const CHART_PAD = {l:56, r:130, t:14, b:28};
+document.querySelector('.chart-card').style.setProperty('--pl', CHART_PAD.l+'px');
+document.querySelector('.chart-card').style.setProperty('--pr', CHART_PAD.r+'px');
 const cv = document.getElementById('chart');
 const ctx = cv.getContext('2d');
 function resizeCanvas(){
@@ -689,56 +810,372 @@ function resizeCanvas(){
   const w = cv.clientWidth, h = cv.clientHeight;
   cv.width = w*dpr; cv.height = h*dpr;
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  if (typeof tlSpark!=='undefined' && dataWindow()){ drawSpark(); updateOverview(); drawChart(); }
 }
 window.addEventListener('resize', resizeCanvas);
+
+/** 毫秒时长 -> m:ss（超 1 小时 h:mm:ss） */
+function fmtDur(ms){
+  const s=Math.max(0,Math.round(ms/1000));
+  const h=Math.floor(s/3600), m=Math.floor(s%3600/60), ss=s%60;
+  return h>0
+    ? `${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`
+    : `${m}:${String(ss).padStart(2,'0')}`;
+}
+/** epoch ms -> HH:MM:SS（设备本地时区） */
+function hhmmss(ms){
+  const d=new Date(ms);
+  return [d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+}
+/** 温度序列在指定时刻的线性插值；超出已有数据范围返回 null */
+function tempAt(pts, tm){
+  if(!pts.length || tm<pts[0][0] || tm>pts[pts.length-1][0]) return null;
+  let lo=0, hi=pts.length-1;
+  while(lo<hi){ const mid=(lo+hi+1)>>1; if(pts[mid][0]<=tm) lo=mid; else hi=mid-1; }
+  if(lo===pts.length-1) return pts[lo][1];
+  const p1=pts[lo], p2=pts[lo+1];
+  return p2[0]===p1[0] ? p1[1] : p1[1]+(tm-p1[0])*(p2[1]-p1[1])/(p2[0]-p1[0]);
+}
+/** [a,b] 区间内温度极值（含两个端点的插值，折线极值只可能出现在采样点或端点） */
+function extrema(pts,a,b){
+  let mn=Infinity,mx=-Infinity,hit=false;
+  const put=v=>{ if(v===null||v===undefined) return; hit=true; mn=Math.min(mn,v); mx=Math.max(mx,v); };
+  put(tempAt(pts,a)); put(tempAt(pts,b));
+  for(let i=0;i<pts.length;i++){ if(pts[i][0]>=a && pts[i][0]<=b) put(pts[i][1]); }
+  return hit?{mn,mx}:null;
+}
+
+// ================= 时间视口（chart / 时间轴 / A-B 滑块的唯一时间变换源） =================
+// 绝对 epoch ms 是唯一世界坐标；view 只描述“当前能看到哪段时间”：
+//  follow=true 时右端钉住最新数据（span=null 表示显示全部）；
+//  follow=false 时 t0/t1 为显式窗口，平移/缩放只改这两个值。
+const ZOOM_STEPS=[30,60,120,300,600,1200,1800,3000].map(s=>s*1000);
+const MIN_SPAN=30000;
+const view={span:null, follow:true, t0:null, t1:null};
+/** 全部已有数据的时间范围 */
+function dataWindow(){
+  let tmin=Infinity,tmax=-Infinity,has=false;
+  Object.keys(series).forEach(k=>series[k].pts.forEach(p=>{
+    has=true; tmin=Math.min(tmin,p[0]); tmax=Math.max(tmax,p[0]);
+  }));
+  return has?{tmin,tmax}:null;
+}
+/** 当前视口 {t0,t1}（所有渲染都只能从这里取 X 范围） */
+function getView(){
+  const win=dataWindow(); if(!win) return null;
+  if(view.follow){
+    const t1=win.tmax;
+    const t0=view.span===null?win.tmin:Math.max(win.tmin,t1-view.span);
+    return {t0,t1,follow:true};
+  }
+  let t0=view.t0, t1=view.t1, span=t1-t0;
+  if(t1>win.tmax){ t0-=(t1-win.tmax); t1=win.tmax; }
+  if(t0<win.tmin){ t1+=(win.tmin-t0); t0=win.tmin; }
+  if(t1>win.tmax){ span=Math.min(span,win.tmax-win.tmin); t1=win.tmax; t0=t1-span; }
+  if(t0<win.tmin){ t0=win.tmin; t1=win.tmax; }
+  return {t0,t1,follow:false};
+}
+function setExplicit(t0,t1){
+  const win=dataWindow();
+  const full=win.tmax-win.tmin;
+  let span=t1-t0;
+  if(span<MIN_SPAN){ span=MIN_SPAN; t0=t1-span; }       // 右锚定（拖左边缘时）
+  if(span>=full){ t0=win.tmin; t1=win.tmax; }
+  else {
+    // 整体平移钳制到数据范围内，保持跨度不变
+    if(t0<win.tmin){ t1+=win.tmin-t0; t0=win.tmin; }
+    if(t1>win.tmax){ t0-=t1-win.tmax; t1=win.tmax; }
+    if(t0<win.tmin){ t0=win.tmin; t1=win.tmax; }
+  }
+  view.follow=false; view.t0=t0; view.t1=t1; view.span=t1-t0;
+}
+function zoom(dir){
+  const win=dataWindow(); if(!win) return;
+  const v=getView(), cur=v.t1-v.t0;
+  if(dir>0){ // 放大：跨度变小
+    if(cur<=MIN_SPAN+500) return;
+    let ns=ZOOM_STEPS[0];
+    ZOOM_STEPS.forEach(s=>{ if(s<cur-500) ns=s; });
+    if(view.follow){ view.span=ns; }
+    else { const c=(v.t0+v.t1)/2; setExplicit(c-ns/2,c+ns/2); }
+  } else {    // 缩小：跨度变大；没有更大档位则显示全部
+    let ns=null;
+    for(const s of ZOOM_STEPS){ if(s>cur+500){ ns=s; break; } }
+    if(ns===null || ns>=win.tmax-win.tmin-500){ view.span=null; view.follow=true; }
+    else if(view.follow){ view.span=ns; }
+    else { const c=(v.t0+v.t1)/2; setExplicit(c-ns/2,c+ns/2); }
+  }
+  refreshViews();
+}
+function viewFit(){ view.span=null; view.follow=true; refreshViews(); }
+function viewLive(){ view.follow=true; refreshViews(); }
+
+// ---- 曲线下方时间轴窗口条（平移 / 拖边缩放 / 点击跳转 + 迷你曲线） ----
+const tlOver=document.getElementById('tlOver'), tlWin=document.getElementById('tlWin'),
+      tlSpark=document.getElementById('tlSpark'), tlLbl=document.getElementById('tlLbl'),
+      tlT0=document.getElementById('tlT0'), tlT1=document.getElementById('tlT1'),
+      zoomInfo=document.getElementById('zoomInfo'),
+      btnIn=document.getElementById('zoomIn'), btnOut=document.getElementById('zoomOut'),
+      btnFit=document.getElementById('zoomFit'), btnLive=document.getElementById('zoomLive');
+const tlc=tlSpark.getContext('2d');
+function resizeSpark(){
+  const dpr=window.devicePixelRatio||1;
+  const w=tlSpark.clientWidth, h=tlSpark.clientHeight;
+  if(w>0 && (tlSpark.width!==Math.round(w*dpr)||tlSpark.height!==Math.round(h*dpr))){
+    tlSpark.width=w*dpr; tlSpark.height=h*dpr;
+  }
+  tlc.setTransform(dpr,0,0,dpr,0,0);
+}
+function drawSpark(){
+  resizeSpark();
+  const w=tlSpark.clientWidth, h=tlSpark.clientHeight;
+  tlc.clearRect(0,0,w,h);
+  const win=dataWindow(); if(!win || w<=0) return;
+  let vmin=Infinity,vmax=-Infinity;
+  Object.keys(series).forEach(k=>series[k].pts.forEach(p=>{vmin=Math.min(vmin,p[1]);vmax=Math.max(vmax,p[1]);}));
+  if(!(vmax>vmin)){ vmin-=5; vmax+=5; }
+  const X=t=>(t-win.tmin)/(win.tmax-win.tmin)*w;
+  const Y=v=>h-2-(v-vmin)/(vmax-vmin)*(h-4);
+  Object.keys(series).forEach(k=>{
+    const s2=series[k]; tlc.strokeStyle=s2.color; tlc.globalAlpha=.45; tlc.lineWidth=1;
+    tlc.beginPath();
+    s2.pts.forEach((p,i)=>{ const x=X(p[0]),y=Y(p[1]); i?tlc.lineTo(x,y):tlc.moveTo(x,y); });
+    tlc.stroke();
+  });
+  tlc.globalAlpha=1;
+}
+function updateOverview(){
+  const win=dataWindow();
+  if(!win){ tlWin.style.display='none'; tlT0.textContent=''; tlT1.textContent=''; zoomInfo.textContent=''; return; }
+  const v=getView();
+  const lp=(v.t0-win.tmin)/(win.tmax-win.tmin)*100;
+  const rw=(v.t1-v.t0)/(win.tmax-win.tmin)*100;
+  tlWin.style.display='block';
+  tlWin.style.left=Math.max(0,lp)+'%';
+  tlWin.style.width=Math.max(1.5,Math.min(100, rw))+'%';
+  tlLbl.textContent=fmtDur(v.t1-v.t0);
+  tlT0.textContent=hhmmss(win.tmin);
+  tlT1.textContent=hhmmss(win.tmax);
+  const full=Math.abs((v.t1-v.t0)-(win.tmax-win.tmin))<1000;
+  zoomInfo.textContent = `${t('zoomWin')} ${full?t('zoomTotal'):fmtDur(v.t1-v.t0)} · `+
+    `${t('zoomTotal')} ${fmtDur(win.tmax-win.tmin)}`;
+  btnIn.disabled=full ? (win.tmax-win.tmin<=MIN_SPAN+500) : (v.t1-v.t0<=MIN_SPAN+500);
+  btnOut.disabled=full;
+  btnLive.classList.toggle('on', !!v.follow);
+  btnFit.classList.toggle('on', full);
+}
+/** 时间轴上的统一指针交互：l/r 拖边缩放，win 内部平移，空白处点击跳转 */
+const tlDrag={mode:null, startX:0, t0:0, t1:0};
+function tlMsPerPx(){
+  const win=dataWindow(), r=tlOver.getBoundingClientRect();
+  return r.width>0 ? (win.tmax-win.tmin)/r.width : 0;
+}
+tlOver.addEventListener('pointerdown', e=>{
+  if(!dataWindow()) return;
+  const edge=e.target.dataset && e.target.dataset.h;
+  const r=tlOver.getBoundingClientRect();
+  const x=e.clientX-r.left;
+  if(edge){ tlDrag.mode=edge==='l'?'l':'r'; }
+  else if(tlWin.contains(e.target)){ tlDrag.mode='pan'; }
+  else { // 空白：以点击处为中心对齐当前窗口
+    const v0=getView(), tc=win2t(x), span=v0.t1-v0.t0;
+    setExplicit(tc-span/2, tc+span/2);
+    tlDrag.mode='pan';
+  }
+  const nv=getView();
+  tlDrag.startX=x; tlDrag.t0=nv.t0; tlDrag.t1=nv.t1;
+  tlWin.classList.add('dragging');
+  tlOver.setPointerCapture(e.pointerId);
+  refreshViews();
+});
+function win2t(x){ const win=dataWindow(), r=tlOver.getBoundingClientRect();
+  return win.tmin+(x/r.width)*(win.tmax-win.tmin); }
+tlOver.addEventListener('pointermove', e=>{
+  if(!tlDrag.mode) return;
+  const r=tlOver.getBoundingClientRect(), x=e.clientX-r.left;
+  const d=(x-tlDrag.startX)*tlMsPerPx();
+  if(tlDrag.mode==='pan') setExplicit(tlDrag.t0+d, tlDrag.t1+d);
+  else if(tlDrag.mode==='l') setExplicit(tlDrag.t0+d, tlDrag.t1);
+  else setExplicit(tlDrag.t0, tlDrag.t1+d);
+  refreshViews();
+});
+['pointerup','pointercancel'].forEach(ev=>tlOver.addEventListener(ev, e=>{
+  if(!tlDrag.mode) return;
+  tlDrag.mode=null; tlWin.classList.remove('dragging');
+}));
+btnIn.addEventListener('click', ()=>zoom(1));
+btnOut.addEventListener('click', ()=>zoom(-1));
+btnFit.addEventListener('click', viewFit);
+btnLive.addEventListener('click', viewLive);
+
+// ---- A/B 双滑块测量：选中两个绝对时间点，统计用时与各热区温度变化 ----
+const rngA=document.getElementById('rngA'), rngB=document.getElementById('rngB'),
+      mFill=document.getElementById('mFill');
+const meas = { a:null, b:null, dragging:false };
+function measUpdateFill(){
+  const min=+rngA.min, max=+rngA.max;
+  if(max<=min) return;
+  const lp=(meas.a-min)/(max-min)*100, rp=(meas.b-min)/(max-min)*100;
+  mFill.style.left=Math.max(0,Math.min(100,lp))+'%';
+  mFill.style.right=(100-Math.max(0,Math.min(100,rp)))+'%';
+}
+/**
+ * 每秒轮询/缩放平移后同步：滑块范围 = 当前可视窗口（getView），
+ * 选区整体被移出窗口时重置为整个窗口；拖动滑块过程中不干预。
+ */
+function measSync(){
+  const win=getView();
+  if(!win){ meas.a=meas.b=null; document.getElementById('mChips').innerHTML=`<span>${t('measNoData')}</span>`; return; }
+  if(meas.a===null || meas.b===null){ meas.a=win.t0; meas.b=win.t1; }
+  if(!meas.dragging){
+    if(meas.b<win.t0 || meas.a>win.t1){ meas.a=win.t0; meas.b=win.t1; }
+    else {
+      meas.a=Math.min(Math.max(meas.a,win.t0),win.t1);
+      meas.b=Math.min(Math.max(meas.b,win.t0),win.t1);
+    }
+    if(meas.a>meas.b){ const tmp=meas.a; meas.a=meas.b; meas.b=tmp; }
+  }
+  rngA.min=rngB.min=Math.floor(win.t0);
+  rngA.max=rngB.max=Math.ceil(win.t1);
+  rngA.value=Math.round(meas.a); rngB.value=Math.round(meas.b);
+  measUpdateFill();
+}
+function measRenderInfo(){
+  const sum=document.getElementById('mSum'), chipsEl=document.getElementById('mChips');
+  if(meas.a===null){ sum.textContent=''; chipsEl.innerHTML=`<span>${t('measNoData')}</span>`; return; }
+  sum.innerHTML = `<span class="mA">A ${hhmmss(meas.a)}</span> → `+
+    `<span class="mB">B ${hhmmss(meas.b)}</span>`+
+    `<span class="mDur">${t('measDur')} ${fmtDur(meas.b-meas.a)}</span>`;
+  const dtMin=Math.max(0.001,(meas.b-meas.a)/60000);
+  chipsEl.innerHTML = Object.keys(series).map(k=>{
+    const s2=series[k], va=tempAt(s2.pts,meas.a), vb=tempAt(s2.pts,meas.b);
+    if(va===null||vb===null) return '';
+    const ex=extrema(s2.pts,meas.a,meas.b);
+    const d=vb-va, cls=d>0.05?'up':(d<-0.05?'down':'flat'),
+          sign=d>0?'+':'';
+    const hl = ex ? `<span class="msep">｜</span><span class="mh">${t('measHigh')} ${ex.mx.toFixed(1)}℃</span>`+
+                        `<span class="ml">${t('measLow')} ${ex.mn.toFixed(1)}℃</span>` : '';
+    return `<span class="mchip"><i style="background:${s2.color}"></i><b>${s2.name}</b> `+
+      `${va.toFixed(1)} → ${vb.toFixed(1)}℃ <span class="${cls}">${sign}${d.toFixed(1)}℃</span> `+
+      `<span class="${cls}">${sign}${(d/dtMin).toFixed(1)}℃/min</span>${hl}</span>`;
+  }).join('');
+}
+function measDrag(which){
+  let a=+rngA.value, b=+rngB.value;
+  // 禁止交叉，相互顶住
+  if(which==='A' && a>b){ a=b; rngA.value=a; }
+  if(which==='B' && b<a){ b=a; rngB.value=b; }
+  meas.a=a; meas.b=b;
+  measUpdateFill(); measRenderInfo(); drawChart();
+}
+rngA.addEventListener('input', ()=>measDrag('A'));
+rngB.addEventListener('input', ()=>measDrag('B'));
+[rngA,rngB].forEach(el=>{
+  el.addEventListener('pointerdown', ()=>{ meas.dragging=true; });
+  el.addEventListener('focus', ()=>{ meas.dragging=true; });
+});
+window.addEventListener('pointerup', ()=>{
+  if(!meas.dragging) return;
+  meas.dragging=false; measSync();
+});
+window.addEventListener('blur', ()=>{ meas.dragging=false; });
 
 function drawChart(){
   const w = cv.clientWidth, h = cv.clientHeight;
   ctx.clearRect(0,0,w,h);
-  const pad = {l:56,r:130,t:14,b:28};
+  const pad = CHART_PAD;
   const keys = Object.keys(series);
-  let tmin=Infinity,tmax=-Infinity,vmin=Infinity,vmax=-Infinity,has=false;
+  let vmin=Infinity,vmax=-Infinity,has=false;
   keys.forEach(k => series[k].pts.forEach(p=>{
-    has=true; tmin=Math.min(tmin,p[0]); tmax=Math.max(tmax,p[0]);
-    vmin=Math.min(vmin,p[1]); vmax=Math.max(vmax,p[1]);
+    has=true; vmin=Math.min(vmin,p[1]); vmax=Math.max(vmax,p[1]);
   }));
   if(!has) return;
+  const vw=getView(); if(!vw) return;
+  const tmin=vw.t0, tmax=vw.t1>vw.t0?vw.t1:vw.t0+1;
   vmax = Math.max(vmax, threshold+2);
   let lo = Math.floor((vmin-5)/5)*5, hi = Math.ceil((vmax+3)/5)*5;
   if (hi-lo < 20){ const mid=(lo+hi)/2; lo=mid-10; hi=mid+10; }
-  if (tmin===tmax) tmax=tmin+1;
   const X=t=>pad.l+(t-tmin)/(tmax-tmin)*(w-pad.l-pad.r);
   const Y=v=>h-pad.b-(v-lo)/(hi-lo)*(h-pad.t-pad.b);
+  const plotL=pad.l, plotR=w-pad.r, plotT=pad.t, plotB=h-pad.b;
   ctx.strokeStyle='#e0e0e0'; ctx.lineWidth=1; ctx.fillStyle='#78909c'; ctx.font='11px sans-serif';
   ctx.textAlign='right';
   for(let g=lo;g<=hi;g+=5){
-    ctx.beginPath(); ctx.moveTo(pad.l,Y(g)); ctx.lineTo(w-pad.r,Y(g)); ctx.stroke();
-    if(g%10===0) ctx.fillText(g+'℃', pad.l-6, Y(g)+4);
+    ctx.beginPath(); ctx.moveTo(plotL,Y(g)); ctx.lineTo(plotR,Y(g)); ctx.stroke();
+    if(g%10===0) ctx.fillText(g+'℃', plotL-6, Y(g)+4);
   }
   ctx.textAlign='center';
   const span=(tmax-tmin)/1000;
+  const axisLbl=sec=> span>=100 ? fmtDur(sec*1000) : Math.round(sec)+'s';
   for(let i=0;i<=4;i++){
-    ctx.fillText(Math.round(span*i/4)+'s', pad.l+(w-pad.l-pad.r)*i/4, h-8);
+    ctx.fillText(axisLbl(span*i/4), plotL+(plotR-plotL)*i/4, h-8);
   }
   // 阈值线
   if (threshold>=lo && threshold<=hi){
     ctx.strokeStyle='#e53935'; ctx.setLineDash([8,6]);
-    ctx.beginPath(); ctx.moveTo(pad.l,Y(threshold)); ctx.lineTo(w-pad.r,Y(threshold)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL,Y(threshold)); ctx.lineTo(plotR,Y(threshold)); ctx.stroke();
     ctx.setLineDash([]); ctx.fillStyle='#e53935'; ctx.textAlign='left';
-    ctx.fillText(t('protLine')+threshold+'℃', w-pad.r+6, Y(threshold)+4);
+    ctx.fillText(t('protLine')+threshold+'℃', plotR+6, Y(threshold)+4);
   }
-  // 曲线
+  // 曲线（裁剪到绘图区，缩放后视口外的线段不画出界）
+  ctx.save();
+  ctx.beginPath(); ctx.rect(plotL,plotT,plotR-plotL,plotB-plotT); ctx.clip();
   keys.forEach(k=>{
     const s2=series[k], pts=s2.pts; if(!pts.length) return;
     ctx.strokeStyle=s2.color; ctx.lineWidth=2; ctx.beginPath();
     pts.forEach((p,i)=>{ const x=X(p[0]),y=Y(p[1]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
     ctx.stroke();
+  });
+  // A/B 手动测量：选中区间底纹 + 两条引导线 + 各曲线在该时刻的交点
+  if(meas.a!==null && meas.b!==null && meas.a>=tmin-1 && meas.b<=tmax+1){
+    const xA=X(meas.a), xB=X(meas.b);
+    ctx.fillStyle='rgba(30,136,229,.07)';
+    ctx.fillRect(xA, plotT, Math.max(1,xB-xA), plotB-plotT);
+    [[xA,'#1e88e5',meas.a],[xB,'#e53935',meas.b]].forEach(([gx,col,gt])=>{
+      ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.setLineDash([5,4]);
+      ctx.beginPath(); ctx.moveTo(gx,plotT); ctx.lineTo(gx,plotB); ctx.stroke();
+      ctx.setLineDash([]);
+      keys.forEach(k=>{
+        const v=tempAt(series[k].pts,gt);
+        if(v===null || v<lo || v>hi) return;
+        ctx.beginPath(); ctx.arc(gx,Y(v),3.5,0,7);
+        ctx.fillStyle=series[k].color; ctx.fill();
+        ctx.lineWidth=1.5; ctx.strokeStyle='#ffffff'; ctx.stroke();
+      });
+    });
+  }
+  ctx.restore();
+  // A/B 时间标签（绘在裁剪区外，顶部白描边）
+  if(meas.a!==null && meas.b!==null && meas.a>=tmin-1 && meas.b<=tmax+1){
+    const xA=X(meas.a), xB=X(meas.b);
+    ctx.font='bold 11px sans-serif'; ctx.lineWidth=3;
+    ctx.strokeStyle='rgba(255,255,255,.9)';
+    const label=(x,col,txt,align)=>{
+      ctx.textAlign=align; const lx=align==='left'?x+4:(align==='right'?x-4:x);
+      ctx.strokeText(txt,lx,plotT+9); ctx.fillStyle=col; ctx.fillText(txt,lx,plotT+9);
+    };
+    label(xA,'#1e88e5','A '+hhmmss(meas.a), xB-xA<70?'right':'left');
+    label(xB,'#e53935','B '+hhmmss(meas.b), xB-xA<70?'left':'right');
+    ctx.font='11px sans-serif';
+  }
+  // 最新点与右侧序列标签：仅当最新数据在当前视口内
+  keys.forEach(k=>{
+    const s2=series[k], pts=s2.pts; if(!pts.length) return;
     const last=pts[pts.length-1];
+    if(last[0]<tmin || last[0]>tmax) return;
     ctx.fillStyle=s2.color; ctx.beginPath(); ctx.arc(X(last[0]),Y(last[1]),3.5,0,7); ctx.fill();
     ctx.textAlign='left'; ctx.font='bold 12px sans-serif';
-    ctx.fillText(`${s2.name} ${last[1].toFixed(1)}℃`, w-pad.r+6, Y(last[1])+4);
+    ctx.fillText(`${s2.name} ${last[1].toFixed(1)}℃`, plotR+6, Y(last[1])+4);
     ctx.font='11px sans-serif';
   });
+}
+
+/** 视口/数据变化后统一刷新（chart、时间轴、A-B 共用 getView，确保同一时间基准） */
+function refreshViews(){
+  if(!dataWindow()){ drawChart(); updateOverview(); return; }
+  measSync(); measRenderInfo();
+  drawSpark(); updateOverview();
+  drawChart();
 }
 
 // ================= 轮询 =================
@@ -765,7 +1202,7 @@ async function load(){
         '⚠ ' + t(titleKey).replace('{T}', tmp) + t(suffixKey);
     }
     else wb.classList.remove('show');
-    drawChart();
+    refreshViews();
   } catch(e){ setConn(false); }
 }
 applyLang();

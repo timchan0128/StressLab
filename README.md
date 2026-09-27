@@ -20,7 +20,7 @@
 <p align="center">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-yellow"/>
   <img alt="Platform" src="https://img.shields.io/badge/Platform-Android%207.0+-green"/>
-  <img alt="Version" src="https://img.shields.io/badge/Version-1.0.3-blue"/>
+  <img alt="Version" src="https://img.shields.io/badge/Version-1.0.12-blue"/>
 </p>
 
 ---
@@ -157,6 +157,16 @@ curl http://<设备IP>:<debugPort>/api/plugin            # registered / debugUrl
 
 > 版本号自动递增：每次真正打包 `versionCode` +1，`versionName = 1.0.<code>`，
 > 状态存于 `app/version.properties`（`gradle tasks` 等非打包操作不计数）。
+
+### 1.0.12（versionCode 12）
+- **新增** PC 曲线 A/B 双滑块手动测量：拖动两个滑块选取任意两个时间点，自动统计用时、每条温度曲线的起末温度、Δ℃、℃/min；选区内同时给出**最高温/最低温**
+- **新增** 曲线图缩放控制：放大/缩小按钮（30s～3000s 分档）、「全部」显示完整数据、「最新」右端实时跟随；X 轴刻度随窗口自适应（秒 / m:ss）
+- **新增** 曲线下方视频风格时间轴窗口条：迷你全量曲线 + 蓝框视口，支持拖动中部平移、拖左右边缘改窗口、点击空白跳转，窗口时长与两端时钟实时显示
+- 全图（曲线/时间轴/A-B）统一使用同一套绝对毫秒时间基准与单一 view 视口，缩放平移后坐标始终一致；A/B 滑块映射到当前可视窗口
+- **修复** A/B 滑块圆点与图上虚线引导线错位：根因是滑块轨道横跨整行而 canvas 绘图区有 56/130px 左右内边距，且 Chromium 原生 range 端点 thumb 中心会内缩半个 thumb（9px）。现 pad 提为 CHART_PAD 单一常量并经 CSS 变量 `--pl/--pr` 驱动滑块轨道水平内缩，输入框 WebKit 下外扩 18px 补偿半 thumb，真机像素实测误差 <1px
+- **布局调整** 温度统计 chips（CPU/GPU/DDR 的用时、Δ、℃/min、最高/最低温）上移到曲线卡片顶部；缩放按钮之下即为滑块，滑块紧贴曲线图（A/B 圆标置于绘图区两侧留白中）
+- 温度数据缓冲由 1800 点扩大到 7200 点（约 2 小时），支持超过 3000 秒长测试的回看缩放
+- 已在 CB01 真机实测：滑块与引导线像素对齐、按钮缩放、时间轴平移/拖边/跳转、中英文案、A/B 最高最低统计均正常（Node shim 单测 22 项通过）
 
 ### 1.0.5（versionCode 5）
 - **修复** 终端超温后红色警示层铺满整张 CPU 卡遮挡温度、且同一次高温事件反复弹出无法消除的问题：
