@@ -10,6 +10,11 @@ captures/
 *.iml
 local.properties
 
+# ===== 签名密钥（含密码，禁止入库） =====
+keystore.properties
+*.jks
+*.keystore
+
 # ===== 系统 =====
 .DS_Store
 Thumbs.db

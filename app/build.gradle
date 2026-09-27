@@ -11,6 +11,13 @@ if (versionPropsFile.canRead()) {
 }
 def autoVersionCode = (versionProps['VERSION_CODE'] ?: '0').toInteger() + 1
 
+// ===== Release 签名：参数外置到根目录 keystore.properties（不入库），缺失则 release 不签名 =====
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace 'com.thermal.stress'
     compileSdk 34
@@ -48,8 +55,20 @@ android {
         dependsOn 'bumpVersionCode'
     }
 
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : null
             minifyEnabled false
         }
     }
