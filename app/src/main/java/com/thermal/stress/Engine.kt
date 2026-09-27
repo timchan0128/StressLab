@@ -75,6 +75,13 @@ object Engine {
     /** 本次告警是否已自动停止负载（决定终端/PC 提示文案） */
     @Volatile var protectStoppedLoads = false
         private set
+    /**
+     * 告警事件单调序号：每次 protectionTrip 由空变为非空（一次真正新的越限事件）时 +1；
+     * trip 被 PC/插件确认清空、冷却复位都不复用旧序号。终端据此保证“同一事件静音后
+     * 不再弹出”，不会因 trip 文本中途短暂清空而把同一次高温误判成新事件再次声光报警。
+     */
+    @Volatile var protectTripSeq: Long = 0L
+        private set
 
     // 事件锁存：避免每秒重复触发；回落到阈值-2℃后重新武装
     // 可能被监测线程与 HTTP 线程同时访问，统一用 protectLock 保护
@@ -113,6 +120,32 @@ object Engine {
         protectionTrip = ""
     }
 
+    /** 置位活动告警；仅当 trip 由空转非空（一次新事件）时递增 protectTripSeq。
+     *  调用方需持有 protectLock */
+    private fun fireTripLocked(text: String, stopped: Boolean) {
+        val isNewEvent = protectionTrip.isEmpty()
+        protectionTrip = text
+        protectStoppedLoads = stopped
+        if (isNewEvent) protectTripSeq++
+    }
+
+    /**
+     * 负载从“全部停止”变为“有负载启动”（手动/插件/阶梯新一轮烧机）时重新武装保护：
+     * 清除已确认/已停止锁存，由下一监测周期重新判定——此刻仍超阈值会立即再次触发并
+     * 停止负载。堵上“超温后先点‘知道了’/经插件重新下发，即可在高温下绕过自动停止”
+     * 的漏洞。本函数不产生告警、不递增序号；序号留给下一周期真正置位 trip 时使用。
+     */
+    private fun rearmProtectionForNewRun() {
+        if (protectMode == 0) return
+        synchronized(protectLock) {
+            alertLatched = false
+            alertDismissed = false
+            stopLatched = false
+            protectStoppedLoads = false
+            protectionTrip = ""
+        }
+    }
+
     /**
      * 每监测周期（1s）调用：按 protectMode 判定温度提醒 / 自动停止。
      * 仅在监测线程触发状态变更，stopAllLoads 在锁外执行。
@@ -136,18 +169,20 @@ object Engine {
                 stopLatched = true
                 alertLatched = true
                 alertDismissed = false
-                protectStoppedLoads = true
-                protectionTrip = String.format("超温保护触发 @%.1f℃（已自动停止负载）", max)
+                fireTripLocked(
+                    String.format("超温保护触发 @%.1f℃（已自动停止负载）", max),
+                    stopped = true
+                )
                 return@synchronized true
             }
             // 模式1（或模式2下当前无负载）：仅提醒一次
             if (!alertLatched && !alertDismissed && max >= threshold) {
                 alertLatched = true
-                protectStoppedLoads = false
-                protectionTrip = if (mode == 1)
+                val text = if (mode == 1)
                     String.format("温度提醒 @%.1f℃（仅提醒，负载继续）", max)
                 else
                     String.format("超温保护触发 @%.1f℃", max)
+                fireTripLocked(text, stopped = false)
             }
             false
         }
@@ -203,7 +238,11 @@ object Engine {
         val wasActive = loadManager.cfg.anyOn()
         loadManager.apply(c)
         updateWakeLock()
-        if (!wasActive && c.anyOn()) startSession()
+        if (!wasActive && c.anyOn()) {
+            startSession()
+            // 新一轮烧机：重新武装超温保护（高温下重启负载仍会被立即保护）
+            rearmProtectionForNewRun()
+        }
         if (wasActive && !c.anyOn() && !stepRunning) endSession()
         notifyChanged()
     }

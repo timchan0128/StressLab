@@ -158,6 +158,13 @@ curl http://<设备IP>:<debugPort>/api/plugin            # registered / debugUrl
 > 版本号自动递增：每次真正打包 `versionCode` +1，`versionName = 1.0.<code>`，
 > 状态存于 `app/version.properties`（`gradle tasks` 等非打包操作不计数）。
 
+### 1.0.5（versionCode 5）
+- **修复** 终端超温后红色警示层铺满整张 CPU 卡遮挡温度、且同一次高温事件反复弹出无法消除的问题：
+  警示层改为仅占 CPU 卡顶部两行的横幅，温度大字/LOAD/FREQ/MAX 全程可见
+- **修复** PC 端点“知道了”、插件重新烧机或温度跨越回差后，同一超温事件被误判为新事件、终端重播 10 秒声光报警：Engine 新增单调告警事件序号，终端按事件序号静音，同一次高温静音后不再弹出，冷却后再次越限才重新提醒
+- **修复** 安全漏洞：超温确认后立即重新启动负载会绕过模式 2 自动停机保护——新一轮烧机（负载 0→有）现在会重新武装保护锁存，高温下重启仍立即被拦截停机
+- 已在 CB01（192.168.31.6）真机实测：横幅闪烁不遮温度、点击/10 秒静音后同事件不再弹出
+
 ### 1.0.3（versionCode 3）⭐ 首个正式签名版
 - 使用 `timchan.jks` 正式密钥签名（与 UltraRadio 等线上 UltraBar 应用同一证书），APK Signature Scheme v2
 - 签名参数外置在根目录 `keystore.properties`（已加入 `.gitignore`，不入库）；缺失该文件时 release 不签名

@@ -49,13 +49,15 @@ class MainActivity : Activity() {
     private lateinit var gpuFrame: FrameLayout
     private var gpuView: GpuView? = null
 
-    // 超温警告：仅 CPU 卡片内 350ms 闪烁 + 连续合成警报音，10 秒自动停止，点击卡片停止
+    // 超温警告：CPU 卡片“顶部横幅”350ms 闪烁（不遮挡温度大字）+ 连续合成警报音，
+    // 10 秒自动停止，点击卡片停止；同一超温事件静音后不再自动弹出（按事件序号判定）
     private val warnHandler = Handler(Looper.getMainLooper())
     private var warnView: TextView? = null
     private var warnBlinkOn = false
-    private var warnDismissed = false
-    private var warnWasActive = false
     private var warnStartMs = 0L
+    // warnActiveSeq=正在声光展示的事件序号（0=无）；warnMutedSeq=已被本地静音的事件序号
+    private var warnActiveSeq = 0L
+    private var warnMutedSeq = 0L
     @Volatile private var soundCancelled = false
     private var audioTrack: AudioTrack? = null
     private var audioThread: Thread? = null
@@ -293,19 +295,20 @@ class MainActivity : Activity() {
                     card.addView(btn, lp)
                     loadToggles[key] = btn
                 }
-                // CPU 卡：超温警告覆盖层（仅在卡片内闪烁，点击停止）
+                // CPU 卡：超温警告“顶部横幅”（只占顶部两行，不遮挡中部温度大字，点击停止）
                 if (z.key == "cpu") {
                     val wv = TextView(this).apply {
                         visibility = View.GONE
                         gravity = Gravity.CENTER
-                        textSize = 19f
+                        textSize = 15f
                         typeface = Typeface.DEFAULT_BOLD
                         setTextColor(Color.WHITE)
-                        setPadding(dp(8), dp(4), dp(8), dp(4))
-                        setBackgroundColor(Color.rgb(0xB7, 0x1C, 0x1C))
+                        setPadding(dp(8), dp(3), dp(8), dp(3))
+                        setBackgroundColor(Color.rgb(0xC6, 0x28, 0x28))
                         setOnClickListener { dismissWarning() }
                     }
-                    card.addView(wv, FrameLayout.LayoutParams(MATCH, MATCH))
+                    card.addView(wv,
+                        FrameLayout.LayoutParams(MATCH, WRAP, Gravity.TOP))
                     card.setOnClickListener { dismissWarning() }
                     warnView = wv
                 }
@@ -398,27 +401,31 @@ class MainActivity : Activity() {
         updateWarning(snap)
     }
 
-    /** 超温警告：仅在 Engine 存在活动告警（protectionTrip 非空，即模式≠关闭且超阈值）时显示，
-     *  彻底解决“关闭保护后终端仍提醒”。由 Handler 驱动 CPU 卡片连续闪烁 10 秒（期间温度
-     *  波动不影响），10 秒到或点击卡片仅在终端静音/隐藏；温度回落到阈值-2℃ 后 Engine
-     *  清空 trip，本地重新武装，下次超温再次提醒。 */
+    /** 超温警告：以 Engine.protectionTrip + protectTripSeq 为唯一数据源。
+     *  - 视觉：只在 CPU 卡顶部显示横幅闪烁，温度大字始终可见（横幅只占顶部两行）；
+     *  - 同一超温事件：Handler 驱动闪烁 + 警报音 10 秒，10 秒到或点击卡片即静音/隐藏，
+     *    之后即使 trip 文本被 PC/插件中途清空（事件序号不变）也不再自动弹出；
+     *  - 只有温度真正冷却到阈值-2℃ 后再次越限（Engine 产生新事件序号）才会重新提醒。 */
     private fun updateWarning(snap: Snapshot?) {
         val maxT = snap?.maxTemp ?: Double.NaN
         val threshold = Engine.protectThresholdC
+        val seq = Engine.protectTripSeq
         val tripActive = Engine.protectionTrip.isNotEmpty()
 
-        // 告警结束（温度回落 / 被关闭 / PC 端已知道）：复位本地状态并隐藏
+        // 无活动告警（冷却复位 / 被 PC 或插件确认）：停止声光并隐藏。
+        // 事件序号单调递增、不会复用，静音记忆无需清除；卡片若刚被重建也在此归位。
         if (!tripActive) {
-            warnDismissed = false
-            warnWasActive = false
-            warnHandler.removeCallbacks(warnBlinkTask)
-            stopWarningSound()
+            if (warnActiveSeq != 0L) {
+                warnActiveSeq = 0L
+                warnHandler.removeCallbacks(warnBlinkTask)
+                stopWarningSound()
+            }
             warnView?.visibility = View.GONE
             return
         }
 
-        // 终端已被本地静音（10 秒到或点击卡片）：保持隐藏，等 Engine 回落复位
-        if (warnDismissed) {
+        // 本事件已被本地静音（点击卡片或 10 秒到）：同事件不再自动弹出
+        if (seq == warnMutedSeq) {
             warnView?.visibility = View.GONE
             return
         }
@@ -431,14 +438,16 @@ class MainActivity : Activity() {
                 "⚠ OVER-TEMP %.1f℃ ≥ %.0f℃\nALERT ONLY · loads running · tap to mute",
                 maxT, threshold)
 
-        if (warnWasActive) {
-            // 周期进行中：可见性与声音由 warnBlinkTask 控制，这里只刷新文字
+        if (seq == warnActiveSeq) {
+            // 同一事件声光进行中：可见性与声音由 warnBlinkTask 控制，这里只刷新文字。
+            // 若 CPU 卡刚因热区读取抖动被重建，按当前闪烁相位把新横幅同步到正确可见性。
             warnView?.text = msg
+            warnView?.visibility = if (warnBlinkOn) View.VISIBLE else View.INVISIBLE
             return
         }
 
-        // 新告警：启动闪烁 + 警报音
-        warnWasActive = true
+        // 新事件：启动 10 秒横幅闪烁 + 警报音
+        warnActiveSeq = seq
         warnStartMs = SystemClock.uptimeMillis()
         warnBlinkOn = false
         warnHandler.removeCallbacks(warnBlinkTask)
@@ -447,9 +456,12 @@ class MainActivity : Activity() {
         warnView?.text = msg
     }
 
-    /** 点击卡片或满 10 秒：仅停止终端闪烁与声音（不影响 Engine/PC 侧告警） */
+    /** 点击卡片或满 10 秒：仅停止终端闪烁与声音（不影响 Engine/PC 侧告警），
+     *  并记住被静音的事件序号——同一超温事件不再自动弹出 */
     private fun dismissWarning() {
-        warnDismissed = true
+        val seq = if (warnActiveSeq != 0L) warnActiveSeq else Engine.protectTripSeq
+        if (seq != 0L) warnMutedSeq = seq
+        warnActiveSeq = 0L
         warnHandler.removeCallbacks(warnBlinkTask)
         warnView?.visibility = View.GONE
         stopWarningSound()
