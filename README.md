@@ -101,6 +101,19 @@ $env:JAVA_HOME="D:\Program Files\Android\Android Studio\jbr"
 
 # 装机
 adb install -r app\build\outputs\apk\debug\app-debug.apk
+
+# 正式签名版（需在工程根目录放置 keystore.properties，见下）
+.\gradlew.bat :app:assembleRelease --console=plain
+# 产物：app\build\outputs\apk\release\app-release.apk
+```
+
+`keystore.properties`（**不入库**，字段与 UltraRadio 一致）：
+
+```properties
+storeFile=D:/TraeCN Project/timchan.jks
+storePassword=<密钥库密码>
+keyAlias=timchan
+keyPassword=<密钥密码>
 ```
 
 依赖仓库需含 jitpack（`settings.gradle` 已配置），核心依赖：
@@ -126,6 +139,12 @@ curl http://<设备IP>:<debugPort>/api/plugin            # registered / debugUrl
 
 > 版本号自动递增：每次真正打包 `versionCode` +1，`versionName = 1.0.<code>`，
 > 状态存于 `app/version.properties`（`gradle tasks` 等非打包操作不计数）。
+
+### 1.0.3（versionCode 3）⭐ 首个正式签名版
+- 使用 `timchan.jks` 正式密钥签名（与 UltraRadio 等线上 UltraBar 应用同一证书），APK Signature Scheme v2
+- 签名参数外置在根目录 `keystore.properties`（已加入 `.gitignore`，不入库）；缺失该文件时 release 不签名
+- 功能同 1.0.2；已在主机实测：插件注册成功、4 actions ACK、PC 控制台全链路正常
+- Git 标签：`v1.0.3`
 
 ### 1.0.2（versionCode 2）
 - **新增** 三态超温保护（关闭 / 仅提醒 / 提醒并自动停止），修复"关闭保护后终端与 PC 仍告警"的问题——终端原先只比对温度未读开关，PC 告警条状态残留
