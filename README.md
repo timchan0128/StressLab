@@ -1,26 +1,27 @@
-# StressLab · UltraBARX 整机性能/热测试台
+<p align="center">
+  <img src="docs/screenshots/app_icon.png" alt="StressLab" width="180"/>
+</p>
 
-运行于 LineOS / UltraBar 条形屏主机（Android）的压测与热测试工具，可对设备施加 CPU / 内存 / IO / GPU 负载，实时监测四热区温度，并作为 **LineOS 插件**被主机宿主统一调度，同时提供 PC 端 Web 控制台。
+<h1 align="center">StressLab</h1>
 
-- 应用包名：`com.thermal.stress`
-- 注册名：`StressLab`（宿主 / 前台通知 / 控制台统一）
-- 最低系统：Android 7.0（minSdk 24）；目标 targetSdk 29，compileSdk 34
+<p align="center">
+  <b>UltraBARX 整机性能 / 热测试台 · CPU / 内存 / IO / GPU 负载 + 四热区实时监测 + LineOS 插件接入</b>
+</p>
 
----
+<p align="center">
+  专为 UltraBar 条形屏主机（Android）设计的压测与热测试工具，支持多维度负载施加、四热区温度实时监测、<br/>
+  三态超温保护、CSV 测试记录，并作为 LineOS 插件被宿主统一调度，同时提供 PC 端 Web 控制台。
+</p>
 
-## 界面预览
+<p align="center">
+  <img src="docs/screenshots/terminal_main.png" alt="终端长条屏主界面"/>
+</p>
 
-### 终端长条屏（1424×280）
-
-四热区实时卡片：运行状态（RUN/STOP）、当前/最高温度、负载占用、CPU 频率、内存占用；底部为时间、当前负载档位与右下角的动态 PC 控制台地址。
-
-![终端主界面](docs/screenshots/terminal_main.png)
-
-### PC Web 控制台
-
-浏览器直接访问终端显示的地址即可，无需安装软件：四热区温度、实时负载/内存/供电、温度曲线、负载下发、阶梯烧机、超温保护、CSV 记录多选删除与打包下载。
-
-![PC Web 控制台](docs/screenshots/pc_console.png)
+<p align="center">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-yellow"/>
+  <img alt="Platform" src="https://img.shields.io/badge/Platform-Android%207.0+-green"/>
+  <img alt="Version" src="https://img.shields.io/badge/Version-1.0.3-blue"/>
+</p>
 
 ---
 
@@ -60,9 +61,10 @@
   | `thermal.status` | 无 | 四热区温度 / 负载 / 阈值 |
 
 ### PC Web 控制台
-- 终端右下角实时显示动态控制台地址（亮蓝加粗）
-- 实时状态卡片、负载下发、保护模式切换、CSV 记录管理
-- 浏览器标签页 favicon；中英文双语
+
+浏览器直接访问终端右下角显示的动态地址即可，无需安装软件：四热区温度、实时负载/内存/供电、温度曲线、负载下发、阶梯烧机、超温保护、CSV 记录多选删除与打包下载。
+
+![PC Web 控制台](docs/screenshots/pc_console.png)
 
 ---
 
